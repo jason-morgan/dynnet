@@ -112,8 +112,8 @@ propose_b <- function(state)
 {
     ## scale <- 1 / (length(state$theta$b) + 1)
     ## e <- rnorm(length(state$theta$b), mean=0, sd=scale)
-    e <- runif(1)
-    state$theta$b <- state$theta$b + e
+    e <- runif(1, min=-1, max=1)
+    state$theta$b <- abs(state$theta$b + e)
     state
 }
 
