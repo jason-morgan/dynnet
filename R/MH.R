@@ -110,8 +110,9 @@ mk_log_posterior <- function(family="logit")
 
 propose_b <- function(state)
 {
-    scale <- 1 / (length(state$theta$b) + 1)
-    e <- rnorm(length(state$theta$b), mean=0, sd=scale)
+    ## scale <- 1 / (length(state$theta$b) + 1)
+    ## e <- rnorm(length(state$theta$b), mean=0, sd=scale)
+    e <- runif(1)
     state$theta$b <- state$theta$b + e
     state
 }
@@ -159,10 +160,13 @@ llik_fn <- function(family)
 
 log_prior <- function(b, Z, ref_idx, b_sd=10, Z_sd=5)
 {
-    b_sigma <- diag(b_sd, nrow=length(b))
-    Z_sigma <- diag(Z_sd, nrow=ncol(Z))
+    ## b_sigma <- diag(b_sd, nrow=length(b))
+    ## B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
 
-    B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
+    ## Matches the prior used by HRH (2002)
+    B_prior <- dgamma(b, 1, scale=1, log=TRUE)
+
+    Z_sigma <- diag(Z_sd, nrow=ncol(Z))
     Z_prior <- sum(mvtnorm::dmvnorm(Z[-ref_idx,], sigma=Z_sigma, log=TRUE))
 
     B_prior + Z_prior
