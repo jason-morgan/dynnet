@@ -1,4 +1,4 @@
-lsm <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
+lsm_MH <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
 {
     y <- as.matrix(network$adj[[1]])
     y <- y[lower.tri(y)]
@@ -23,62 +23,77 @@ lsm <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
     samples[1,Z_idx] <- as.vector(start_Z)
     samples[1,p_idx] <- log_posterior(y, start_b, start_Z, X, ref_idx)
 
-    smry    <- list(b_accepted=0, Z_accepted=0)
-    current <- list(b=start_b, Z=start_Z, posterior=samples[1,p_idx], smry=smry)
+    model <- list(y=y, X=X, ref_idx=ref_idx, family=family,
+                  log_posterior=log_posterior)
+    state <- list(theta=list(b=start_b, Z=start_Z, posterior=samples[1,p_idx]),
+                  smry=list(b_accepted=0, b_iter=0, Z_accepted=0, Z_iter=0))
 
     for (i in 2:iter) {
         if (i %% 1000 == 0) cat("Iter:", i, "\n")
 
-        current <- MH_iter(current$b,
-                           current$Z,
-                           ref_idx,
-                           y, X,
-                           current$posterior,
-                           current$smry,
-                           log_posterior)
+        state <- MCMC_step_Z(state, model)
+        state <- MCMC_step_b(state, model)
 
-        samples[i,b_idx] <- current$b
-        samples[i,Z_idx] <- as.vector(current$Z)
-        samples[i,p_idx] <- current$posterior
+        samples[i,b_idx] <- state$theta$b
+        samples[i,Z_idx] <- as.vector(state$theta$Z)
+        samples[i,p_idx] <- state$theta$posterior
     }
 
-    cat("\nb accepted:", current$smry$b_accepted / iter,
-        "\nZ accepted:", current$smry$Z_accepted / iter, "\n")
+    cat("\nb accepted:", state$smry$b_accepted / state$smry$b_iter,
+        "\nZ accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
 
-    ## mcmc(data=samples, start=0, end=iter, thin=thin)
     list(samples, idx=list(ref=ref_idx, b=b_idx, Z=Z_idx, lp=p_idx))
 }
 
-MH_iter <- function(b, Z, ref_idx, y, X, cur_post, smry, log_posterior)
+MCMC_step_Z <- function(state, model)
 {
-    b_prop  <- list(b=propose_b(b), Z=Z)
-    current <- list(b=b, Z=Z, posterior=cur_post)
-    b_step  <- MH_step(b_prop, current, ref_idx, y, X, log_posterior)
+    ## idx <- seq_len(nrow(state$theta$Z))[-model$ref_idx]
+    ## order_idx <- sample(idx, length(idx), replace=TRUE)
 
-    Z_prop  <- list(b=b, Z=propose_Z(Z, ref_idx, i=5))
-    current <- list(b=b_step$b, Z=Z, posterior=b_step$posterior)
-    Z_step  <- MH_step(Z_prop, current, ref_idx, y, X, log_posterior)
+    ## Update the latent locations of each node separately.
+    ## for (i in order_idx) {
+    ##     proposal <- propose_Z(i, state)
+    ##     update   <- MH_update(proposal, state, model)
+    ##     state    <- update$state
+    ##     state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
+    ##     state$smry$Z_iter <- state$smry$Z_iter + 1
+    ## }
 
-    ## Z_prop  <- list(b=propose_b(b), Z=propose_Z(Z, ref_idx))
-    ## current <- list(b=b, Z=Z, posterior=cur_post)
-    ## Z_step  <- MH_step(Z_prop, current, ref_idx, y, X, log_posterior)
+    proposal <- propose_Z(model$ref_idx, state)
+    update   <- MH_update(proposal, state, model)
+    state    <- update$state
+    state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
+    state$smry$Z_iter <- state$smry$Z_iter + 1
 
-    smry$b_accepted <- smry$b_accepted + b_step$accept
-    smry$Z_accepted <- smry$Z_accepted + Z_step$accept
-
-    list(b=Z_step$b, Z=Z_step$Z, posterior=Z_step$posterior, smry=smry)
+    state
 }
 
-MH_step <- function(proposal, current, ref_idx, y, X, log_posterior)
+MCMC_step_b <- function(state, model)
 {
-    new_post <- log_posterior(y, proposal$b, proposal$Z, X, ref_idx)
-    p <- exp(new_post - current$posterior)
+    proposal <- propose_b(state)
+    update   <- MH_update(proposal, state, model)
+    state    <- update$state
+    state$smry$b_accepted <- state$smry$b_accepted + update$accept
+    state$smry$b_iter <- state$smry$b_iter + 1
+
+    state
+}
+
+MH_update <- function(proposal, state, model)
+{
+    new_post <- model$log_posterior(model$y, proposal$theta$b, proposal$theta$Z,
+                                    model$X, model$ref_idx)
+
+    p <- exp(new_post - state$theta$posterior)
+    accept <- 0
 
     if (runif(1) < p) {
-        list(b=proposal$b, Z=proposal$Z, posterior=new_post, accept=1)
-    } else {
-        list(b=current$b, Z=current$Z, posterior=current$posterior, accept=0)
+        state$theta <- proposal$theta
+        state$theta$posterior <- new_post
+        accept <- 1
     }
+
+    list(state=state, accept=accept)
 }
 
 mk_log_posterior <- function(family="logit")
@@ -93,24 +108,35 @@ mk_log_posterior <- function(family="logit")
     }
 }
 
-propose_b <- function(b)
+propose_b <- function(state)
 {
-    b + rnorm(length(b), mean=0, sd=0.5)
+    scale <- 1 / (length(state$theta$b) + 1)
+    e <- rnorm(length(state$theta$b), mean=0, sd=scale)
+    state$theta$b <- state$theta$b + e
+    state
 }
 
-propose_Z <- function(Z, ref_idx, i=nrow(Z)-length(ref_idx))
+propose_Z <- function(ref_idx, state)
 {
-    idx     <- sample(seq_len(nrow(Z))[-ref_idx], i)
-    ## S       <- (length(Z) - (ncol(Z) * length(ref_idx))) - 2
-    S       <- i * ncol(Z)
+    n <- nrow(state$theta$Z[-ref_idx,])
+    N <- n * ncol(state$theta$Z)
+    scale <- 1 / N
 
-    ## idx     <- seq_len(nrow(Z))[-ref_idx]
-    ## S       <- length(idx) * ncol(Z)
+    e <- mvtnorm::rmvnorm(n,
+                          mean=rep(0, ncol(state$theta$Z)),
+                          sigma=diag(ncol(state$theta$Z))*scale)
 
-    e       <- mvtnorm::rmvnorm(i, mean=rep(0, ncol(Z)),
-                                sigma=diag(1/S, nrow=ncol(Z)))
-    Z[idx,] <- Z[idx,] + e
-    Z
+    state$theta$Z[-ref_idx,] <- state$theta$Z[-ref_idx,] + e
+    state
+}
+
+propose_one_Z <- function(idx, state)
+{
+    scale <- 1 / (ncol(state$theta$Z) - 1)
+    e <- rnorm(ncol(state$theta$Z), mean=0, sd=scale)
+
+    state$theta$Z[idx,] <- state$theta$Z[idx,] + e
+    state
 }
 
 llik_logit <- function(y, lp)
@@ -131,7 +157,7 @@ llik_fn <- function(family)
            stop("unknown family"))
 }
 
-log_prior <- function(b, Z, ref_idx, b_sd=5, Z_sd=5)
+log_prior <- function(b, Z, ref_idx, b_sd=10, Z_sd=5)
 {
     b_sigma <- diag(b_sd, nrow=length(b))
     Z_sigma <- diag(Z_sd, nrow=ncol(Z))
