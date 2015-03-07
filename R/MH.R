@@ -49,7 +49,7 @@ lsm_MH <- function(network, start_b, start_Z, ref_idx, family,
     state$smry$Z_accepted <- 0
     state$smry$Z_iter     <- 0
 
-    cat("Beginning sampling stage: ")
+    cat("\nBeginning sampling stage: ")
     for (i in 1:nsamples) {
         if (i %% 1000 == 0) cat(i, "...", sep="")
 
@@ -182,13 +182,13 @@ llik_fn <- function(family)
            stop("unknown family"))
 }
 
-log_prior_b <- function(b)
+log_prior_b <- function(b, b_sd=100)
 {
-    ## b_sigma <- diag(b_sd, nrow=length(b))
-    ## B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
+    b_sigma <- diag(b_sd, nrow=length(b))
+    B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
 
     ## Matches the prior used by HRH (2002)
-    B_prior <- dgamma(b, 1, scale=1, log=TRUE)
+    ## B_prior <- dgamma(b, 1, scale=1, log=TRUE)
     B_prior
 }
 
