@@ -1,4 +1,5 @@
-lsm_MH <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
+lsm_MH <- function(network, start_b, start_Z, ref_idx, family,
+                   burnin=10000, nsamples=10000)
 {
     y <- as.matrix(network$adj[[1]])
     y <- y[lower.tri(y)]
@@ -10,7 +11,7 @@ lsm_MH <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
     b_len   <- length(start_b)
     Z_len   <- length(start_Z)
 
-    samples <- matrix(0, ncol=(1 + b_len + Z_len), nrow=iter)
+    samples <- matrix(0, ncol=(1 + b_len + Z_len), nrow=nsamples)
     colnames(samples) <- c(paste0("b", 0:(b_len-1)),
                            paste0("Z", 1:Z_len),
                            "lp")
@@ -28,8 +29,29 @@ lsm_MH <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
     state <- list(theta=list(b=start_b, Z=start_Z, posterior=samples[1,p_idx]),
                   smry=list(b_accepted=0, b_iter=0, Z_accepted=0, Z_iter=0))
 
-    for (i in 2:iter) {
-        if (i %% 1000 == 0) cat("Iter:", i, "\n")
+    ## Burnin stage
+    cat("Beginning burnin stage: ")
+    for (i in 2:burnin) {
+        if (i %% 1000 == 0) cat(i, "...", sep="")
+
+        state <- MCMC_step_Z(state, model)
+        state <- MCMC_step_b(state, model)
+    }
+
+    cat("\nBurnin stage acceptance rates:")
+    cat("\n  b accepted:", state$smry$b_accepted / state$smry$b_iter,
+        "\n  Z accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
+
+
+    ## Sampling stage
+    state$smry$b_accepted <- 0
+    state$smry$b_iter     <- 0
+    state$smry$Z_accepted <- 0
+    state$smry$Z_iter     <- 0
+
+    cat("Beginning sampling stage: ")
+    for (i in 1:nsamples) {
+        if (i %% 1000 == 0) cat(i, "...", sep="")
 
         state <- MCMC_step_Z(state, model)
         state <- MCMC_step_b(state, model)
@@ -39,8 +61,9 @@ lsm_MH <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
         samples[i,p_idx] <- state$theta$posterior
     }
 
-    cat("\nb accepted:", state$smry$b_accepted / state$smry$b_iter,
-        "\nZ accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
+    cat("\nSampling stage acceptance rates:")
+    cat("\n  b accepted:", state$smry$b_accepted / state$smry$b_iter,
+        "\n  Z accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
 
     list(samples, idx=list(ref=ref_idx, b=b_idx, Z=Z_idx, lp=p_idx))
 }
