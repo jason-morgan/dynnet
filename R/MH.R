@@ -47,23 +47,23 @@ lsm_MH <- function(network, start_b, start_Z, ref_idx, family, iter=10000)
 
 MCMC_step_Z <- function(state, model)
 {
-    ## idx <- seq_len(nrow(state$theta$Z))[-model$ref_idx]
-    ## order_idx <- sample(idx, length(idx), replace=TRUE)
+    idx <- seq_len(nrow(state$theta$Z))[-model$ref_idx]
+    order_idx <- sample(idx, length(idx), replace=TRUE)
 
     ## Update the latent locations of each node separately.
-    ## for (i in order_idx) {
-    ##     proposal <- propose_Z(i, state)
-    ##     update   <- MH_update(proposal, state, model)
-    ##     state    <- update$state
-    ##     state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
-    ##     state$smry$Z_iter <- state$smry$Z_iter + 1
-    ## }
+    for (i in order_idx) {
+        proposal <- propose_one_Z(i, state)
+        update   <- MH_update(proposal, state, model)
+        state    <- update$state
+        state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
+        state$smry$Z_iter <- state$smry$Z_iter + 1
+    }
 
-    proposal <- propose_Z(model$ref_idx, state)
-    update   <- MH_update(proposal, state, model)
-    state    <- update$state
-    state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
-    state$smry$Z_iter <- state$smry$Z_iter + 1
+    ## proposal <- propose_Z(model$ref_idx, state)
+    ## update   <- MH_update(proposal, state, model)
+    ## state    <- update$state
+    ## state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
+    ## state$smry$Z_iter <- state$smry$Z_iter + 1
 
     state
 }
@@ -104,7 +104,7 @@ mk_log_posterior <- function(family="logit")
     {
         d  <- as_distance_vector(Z)
         lp <- (X %*% b) - d
-        llik(y, lp) + log_prior(b, Z, ref_idx)
+        llik(y, lp) + log_prior_b(b) + log_prior_Z(Z, ref_idx)
     }
 }
 
@@ -112,7 +112,7 @@ propose_b <- function(state)
 {
     ## scale <- 1 / (length(state$theta$b) + 1)
     ## e <- rnorm(length(state$theta$b), mean=0, sd=scale)
-    e <- runif(1, min=-1, max=1)
+    e <- runif(1, min=-2, max=2)
     state$theta$b <- abs(state$theta$b + e)
     state
 }
@@ -121,7 +121,7 @@ propose_Z <- function(ref_idx, state)
 {
     n <- nrow(state$theta$Z[-ref_idx,])
     N <- n * ncol(state$theta$Z)
-    scale <- 1 / N
+    scale <- 1 / sqrt(N)
 
     e <- mvtnorm::rmvnorm(n,
                           mean=rep(0, ncol(state$theta$Z)),
@@ -133,7 +133,8 @@ propose_Z <- function(ref_idx, state)
 
 propose_one_Z <- function(idx, state)
 {
-    scale <- 1 / (ncol(state$theta$Z) - 1)
+    ## scale <- 1 / (ncol(state$theta$Z) - 1)
+    scale <- 1.5
     e <- rnorm(ncol(state$theta$Z), mean=0, sd=scale)
 
     state$theta$Z[idx,] <- state$theta$Z[idx,] + e
@@ -158,16 +159,20 @@ llik_fn <- function(family)
            stop("unknown family"))
 }
 
-log_prior <- function(b, Z, ref_idx, b_sd=10, Z_sd=5)
+log_prior_b <- function(b)
 {
     ## b_sigma <- diag(b_sd, nrow=length(b))
     ## B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
 
     ## Matches the prior used by HRH (2002)
     B_prior <- dgamma(b, 1, scale=1, log=TRUE)
+    B_prior
+}
 
+log_prior_Z <- function(Z, ref_idx, Z_sd=100)
+{
     Z_sigma <- diag(Z_sd, nrow=ncol(Z))
     Z_prior <- sum(mvtnorm::dmvnorm(Z[-ref_idx,], sigma=Z_sigma, log=TRUE))
 
-    B_prior + Z_prior
+    Z_prior
 }
