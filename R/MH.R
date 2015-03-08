@@ -1,4 +1,4 @@
-lsm_MH <- function(network, start_b, start_Z, ref_idx, family,
+lsm_MH <- function(network, start_b, start_Z, ref_idx, family="logit",
                    burnin=10000, nsamples=10000)
 {
     y <- as.matrix(network$adj[[1]])
@@ -74,19 +74,19 @@ MCMC_step_Z <- function(state, model)
     order_idx <- sample(idx, length(idx), replace=TRUE)
 
     ## Update the latent locations of each node separately.
-    for (i in order_idx) {
-        proposal <- propose_one_Z(i, state)
-        update   <- MH_update(proposal, state, model)
-        state    <- update$state
-        state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
-        state$smry$Z_iter <- state$smry$Z_iter + 1
-    }
+    ## for (i in order_idx) {
+    ##     proposal <- propose_one_Z(i, state)
+    ##     update   <- MH_update(proposal, state, model)
+    ##     state    <- update$state
+    ##     state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
+    ##     state$smry$Z_iter <- state$smry$Z_iter + 1
+    ## }
 
-    ## proposal <- propose_Z(model$ref_idx, state)
-    ## update   <- MH_update(proposal, state, model)
-    ## state    <- update$state
-    ## state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
-    ## state$smry$Z_iter <- state$smry$Z_iter + 1
+    proposal <- propose_Z(model$ref_idx, state)
+    update   <- MH_update(proposal, state, model)
+    state    <- update$state
+    state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
+    state$smry$Z_iter <- state$smry$Z_iter + 1
 
     state
 }
@@ -144,6 +144,7 @@ propose_Z <- function(ref_idx, state)
 {
     n <- nrow(state$theta$Z[-ref_idx,])
     N <- n * ncol(state$theta$Z)
+    ## scale <- 1 / sqrt(N)
     scale <- 1 / sqrt(N)
 
     e <- mvtnorm::rmvnorm(n,

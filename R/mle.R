@@ -1,81 +1,79 @@
-## Z_step <- function(Z, b=NULL, net=NULL, llik_fn=logit_loglik)
-## {
-##     cols <- to_columns(net, c(b, Z))
-##     d <- calc_distances(calc_positions(net$stan$T,
-##                                        cols$pos, cols$traj))
-##     d <- do.call(c, d)
-##     llik_fn(net$stan$y, b, d)
-## }
+lsm_MLE <- function(network, k=1, start=NULL, family="logit")
+{
+    llik <- mk_log_likelihood(family, k=k)
 
-## b_step <- function(b, Z=NULL, net=NULL, llik_fn=logit_loglik)
-## {
-##     cols <- to_columns(net, c(b, Z))    
-##     d <- calc_distances(calc_positions(net$stan$T,
-##                                        cols$pos, cols$traj))
-##     d <- do.call(c, d)
-##     llik_fn(net$stan$y, b, d)
-## }
+    y <- network$adj[[1]][lower.tri(network$adj[[1]])]
+    X <- network$X[[1]]
+    b_idx <- 1:ncol(X)
+    Z_idx <- (length(b_idx)+1):(nrow(network$adj[[1]])*k+length(b_idx))
 
-## data_lsm <- function(net)
-## {
-##     adj <- get_adjacency(net, period=1)    
-## }
+    if (is.null(start))
+        theta <- c(rep(0, length(b_idx)), rnorm(length(Z_idx)))
+    else
+        theta <- center_Z(start, b_idx, Z_idx, k)
 
-## est_mle_lsm <- function(net) {
+    tol <- sqrt(.Machine$double.eps)
 
-##     data_lsm(net)
+    ## Initial estimates of Z
+    cur <- optim(theta[Z_idx], MLE_Z_update, llik=llik, theta=theta, y=y, X=X,
+                 b_idx=b_idx, Z_idx=Z_idx, method="BFGS",
+                 control=list(trace=0, fnscale=-1))
+    theta[Z_idx] <- cur$par
+    theta <- center_Z(theta, b_idx, Z_idx, k)
 
-##     ## tol <- sqrt(.Machine$double.eps)
-##     ## i   <- 1
+    cur_lik <- 0
+    iter <- 0
+    MAXITER <- 100
+    while (iter < MAXITER || (abs(cur$value - cur_lik) > tol )) {
+        cur <- optim(theta[b_idx], MLE_b_update, llik=llik, theta=theta, y=y,
+                     X=X, b_idx=b_idx, Z_idx=Z_idx, method="Brent", lower=-100,
+                     upper=100, control=list(trace=0, fnscale=-1))
+        theta[b_idx] <- cur$par
 
-##     ## current_b <- mean(net$stan$y)
-##     ## current_Z <- rep(0, (net$stan$n-net$stan$K-1)*Net$stan$K * 2)
+        cur <- optim(theta[Z_idx], MLE_Z_update, llik=llik, theta=theta, y=y, X=X,
+                     b_idx=b_idx, Z_idx=Z_idx,
+                     control=list(trace=0, fnscale=-1))
+        theta[Z_idx] <- cur$par
+        theta <- center_Z(theta, b_idx, Z_idx, k)
 
-##     ## if (verbose > 0) {
-##     ##     cat("## ", rep("-", 77), "\n", sep="")        
-##     ##     cat("## Estimating starting positions and trajectories...\n")
-##     ## }
-            
-##     ## est_start <- optim(current_Z, Z_step, b=current_b, net=Net, llik_fn=llik_fn,
-##     ##                    method="SANN",
-##     ##                    control=list(maxit=10000, fnscale=-1, trace=verbose-1))
+        cat("Log-likelihood:", cur$value, "\n")
+        iter <- iter + 1
+        cur_lik <- cur$value
+    }
 
-##     ## current_Z <- est_start$par
-##     ## current_llik <- est_start$value
-##     ## old_lik <- current_llik + 10        # algorithm will run at least once
-##     ## if (verbose > 0) cat("##   Initial log-likelihood:", current_llik, "\n")    
-    
-##     ## while (abs(current_llik - old_lik) > tol && i <= iter) {
-##     ##     ## update Z, b fixed
-##     ##     if (verbose > 0) {
-##     ##         cat("## ", rep("-", 77), "\n", sep="")
-##     ##         cat("## Iteration:", i, "\n##   Z step...\n")
-##     ##     }
-##     ##     est_Z <- optim(current_Z, Z_step, b=current_b, net=Net, llik_fn=llik_fn,
-##     ##                    method=method,
-##     ##                    control=list(maxit=10000, fnscale=-1, trace=verbose-1))
+    list(theta=theta, last=cur)
+}
 
-##     ##     current_Z <- est_Z$par
+center_Z <- function(theta, b_idx, Z_idx, k)
+{
+    Z_est <- scale(matrix(theta[Z_idx], ncol=k), scale=FALSE)
+    c(theta[b_idx], as.vector(Z_est))
+}
 
-##     ##     ## update b, Z fixed
-##     ##     if (verbose > 0) cat("##   b step...\n")
-##     ##     est_b <- optim(current_b, b_step, Z=current_Z, net=Net, llik_fn=llik_fn,
-##     ##                    method="BFGS",
-##     ##                    control=list(maxit=10000, fnscale=-1, trace=verbose-1))
+MLE_Z_update <- function(Z, llik=NULL, theta=NULL, y=NULL, X=NULL, b_idx=NULL,
+                         Z_idx=NULL)
+{
+    theta[Z_idx] <- Z
+    llik(theta, y=y, X=X, b_idx=b_idx, Z_idx=Z_idx)
+}
 
-##     ##     current_b <- est_b$par
+MLE_b_update <- function(b, llik=NULL, theta=NULL, y=NULL, X=NULL, b_idx=NULL,
+                         Z_idx=NULL)
+{
+    theta[b_idx] <- b
+    llik(theta, y=y, X=X, b_idx=b_idx, Z_idx=Z_idx)
+}
 
-##     ##     old_llik     <- current_llik
-##     ##     current_llik <- est_b$value
-##     ##     i <- i+1
-##     ##     if (verbose > 0) cat("##   New log-likelihood:", current_llik, "\n")
-##     ## }
+mk_log_likelihood <- function(family, k)
+{
+    llik <- llik_fn(family)
 
-##     ## if (verbose > 0) {
-##     ##     cat("## ", rep("-", 77), "\n", sep="")
-##     ##     cat("##   Final log-likelihood:", current_llik, "\n")
-##     ##     cat("##", rep("-", 77), "\n")        
-##     ## }
-    
-##     ## list(b=current_b, Z=current_Z)
-## }
+    function(theta, y=NULL, X=NULL, b_idx=NULL, Z_idx=NULL)
+    {
+        b  <- theta[b_idx]
+        Z  <- matrix(theta[Z_idx], ncol=k)
+        d  <- as_distance_vector(Z)
+        lp <- (X %*% b) - d
+        llik(y, lp)
+    }
+}
