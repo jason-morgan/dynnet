@@ -6,7 +6,8 @@ Description: This model implements several latent space models for
     static and dynamic networks.
 Depends: R (>= 3.1.2)
 Imports: mvtnorm,
-         Matrix
+         Matrix,
+	 sna
 License: GPL-3
 LazyData: true
 Suggests: testthat
