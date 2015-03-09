@@ -9,20 +9,31 @@
 ##' @param X Model matrix for exogenous covariates.
 ##' @return Vector of starting values.
 ##' @author Jason W. Morgan \email{jason.w.morgan@gmail.com}
-init_coef <- function(Y, k, X, ref_pos)
+init_coef <- function(Y, X, ref_pos, ref_idx)
 {
-    Z <- init_Z(Y, k)
+    Z <- init_Z(Y, ncol(ref_pos))
     b <- init_b(Y, X, Z)
     c(b, as.vector(Z))
 }
 
-init_Z <- function(Y, k, ref_pos)
+init_Z <- function(Y, ref_pos, ref_idx)
 {
+    k <- ncol(ref_pos)
+
     ## Geodesic distances
-    D <- sna::geodist(Y, inf.replace=nrow(Y), ignore.eval=FALSE)
+    D <- sna::geodist(Y, inf.replace=nrow(Y), ignore.eval=TRUE)$gdist
+
     ## MDS to positions
-    ## Rotate to references
-    D
+    Z0 <- cmdscale(D, k)
+
+    T <- MCMCpack::procrustes(Z0[ref_idx,], ref_pos,
+                              translation=TRUE, dilation=TRUE)
+    Z.star <- T$s * Z0 %*% T$R
+
+    for (i in 1:ncol(Z.star))
+        Z.star[,i] <- Z.star[,i] + T$t[i,]
+
+    Z.star
 }
 
 init_b <- function(Y, X, Z)
