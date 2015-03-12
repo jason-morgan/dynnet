@@ -8,10 +8,10 @@
 ##' @param k Positive integer. Number of dimensions for the latent social space.
 ##' @param X Model matrix for exogenous covariates.
 ##' @return Vector of starting values.
-##' @author Jason W. Morgan \email{jason.w.morgan@gmail.com}
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 init_coef <- function(Y, X, ref_pos, ref_idx)
 {
-    Z <- init_Z(Y, ncol(ref_pos))
+    Z <- init_Z(Y, ref_pos, ref_idx)
     b <- init_b(Y, X, Z)
     c(b, as.vector(Z))
 }
@@ -21,7 +21,7 @@ init_Z <- function(Y, ref_pos, ref_idx)
     k <- ncol(ref_pos)
 
     ## Geodesic distances
-    D <- sna::geodist(Y, inf.replace=nrow(Y), ignore.eval=TRUE)$gdist
+    D <- igraph::shortest.paths(Y)
 
     ## MDS to positions
     Z0 <- cmdscale(D, k)

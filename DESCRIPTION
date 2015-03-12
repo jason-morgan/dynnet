@@ -6,8 +6,7 @@ Description: This model implements several latent space models for
     static and dynamic networks.
 Depends: R (>= 3.1.2)
 Imports: mvtnorm,
-         Matrix,
-	 sna,
+	 igraph,
 	 MCMCpack
 License: GPL-3
 LazyData: true

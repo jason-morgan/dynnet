@@ -42,21 +42,23 @@
 ##' @return A \code{dynsim} object.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 ##' @export
-simulate_network <- function(n, k=1, periods=1, groups=1,
-                             X          = NULL,
-                             beta       = 0.5,
-                             ref_pos    = default_ref_pos(k),
-                             mean_pos   = matrix(0, ncol=k, nrow=groups),
-                             sigma_pos  = rep(list(diag(k)), groups),
-                             ref_traj   = matrix(0, ncol=k, nrow=k+1),
-                             mean_traj  = matrix(0, ncol=k, nrow=groups),
-                             sigma_traj = rep(list(diag(k)), groups),
-                             traj_fn=trajectory_linear,
+simulate_network <- function(n, k=1, g=1, periods=1,
+                             X       = NULL,
+                             beta    = 0.5,
+                             ref     = list(pos=default_ref_pos(k),
+                                            idx=1:(k+1),
+                                            traj=matrix(0, ncol=k, nrow=k+1),
+                                            sigma_traj=NULL),
+                             groups  = list(mean=matrix(0, ncol=k, nrow=g),
+                                            sigma=rep(list(diag(k)), g),
+                                            traj=matrix(0, ncol=k, nrow=g),
+                                            sigma_traj = rep(list(diag(k)),
+                                                             g)),
+                             traj_fn = trajectory_linear,
                              seed=NULL, family="logit", ...)
 {
-
     if (is.null(X)) {
-        X <- rep(list(matrix(rep(1, n*(n-1)/2))), periods)
+        X <- rep(list(matrix(1, n*(n-1)/2)), periods)
     } else if (is.matrix(X)) {
         X <- rep(list(X), periods)
     }
@@ -65,35 +67,34 @@ simulate_network <- function(n, k=1, periods=1, groups=1,
         set.seed(seed)
 
     if (n < k+1)
-        stop("Number of nodes cannot be less than k+1")
+        stop("Number of nodes cannot be less than the number of reference",
+             " nodes (k+1)")
 
-    if (!all(sapply(X, function(x) { ncol(x) == length(beta) })))
-        stop("Dimension mismatch: X and beta are non-conformable.")
+    if (!all(dim(ref$pos) == c(k+1, k)))
+        stop("Reference position matrix (ref$pos) has the wrong dimensions.",
+             " Should be of\n  dimensions (k+1, k).")
 
-    if (!all(dim(ref_pos) == c(k+1, k)))
-        stop("Reference position matrix (ref_pos) has the wrong dimensions. Should",
-             " be of\n  dimensions (k+1, k).")
+    if (!all(dim(groups$mean) == c(g, k)))
+        stop("Group position matrix (groups$mean) has the wrong dimensions.",
+             " should be of\n  dimensions (g, k).")
 
-    if (!all(dim(mean_pos) == c(groups, k)))
-        stop("Group position matrix (mean_pos) has the wrong dimensions. Should",
-             " be of\n  dimensions (g, k).")
+    if (g != length(groups$sigma))
+        stop("Wrong number of group covariances supplied. Length of",
+             " groups$sigma should be equal\n  to the number of groups.")
 
-    if (groups != length(sigma_pos))
-        stop("Wrong number of group covariances supplied. Length of sigma_pos",
-             " should be equal\n  to the number of groups.")
-
-    if (list_all_equal(split(ref_pos, 1:nrow(ref_pos))))
+    if (list_all_equal(split(ref$pos, 1:nrow(ref$pos))))
         warning("Reference positions all equal. You probably don't want this.")
 
     ## Generate starting position matrix
-    N   <- split_n(n-nrow(ref_pos), groups)
-    pos <- generate_latent_values(N, ref_pos, mean_pos, sigma_pos)
+    N   <- split_n(n-nrow(ref$pos), g)
+    pos <- generate_latent_values(N, ref$pos, groups$mean, groups$sigma)
 
     ## Generate trajectory matrix
     if (periods > 1) {
         ## Generate trajectory matrix
-        N    <- split_n(n-nrow(ref_traj), groups)
-        traj <- generate_latent_values(N, ref_traj, mean_traj, sigma_traj)
+        N    <- split_n(n-nrow(ref$traj), g)
+        traj <- generate_latent_values(N, ref$traj, groups$traj,
+                                       groups$sigma_traj)
         mv   <- calc_positions(1:periods, pos, traj, fn=traj_fn, ...)
     } else {
         traj <- NULL
@@ -105,12 +106,12 @@ simulate_network <- function(n, k=1, periods=1, groups=1,
     adj <- mapply(generate_adjacency, mv, Xb, family=family, SIMPLIFY=FALSE)
 
     ## Create dynnet object.
-    wght <- if (family == "logit") FALSE else TRUE
-    SIM <- dynnet_adjacency(adj, weighted=wght, X=X)
+    wght <- if (family == "logit") NULL else TRUE
+    SIM <- dynnet_adjacency(adj, X=X, weighted=wght)
 
     structure(list(DGP=list(positions=pos, trajectories=traj,
-                   ref_idx=1:(k+1), beta=beta, family=family,
-                   seed=seed),
+                            ref=list(pos=ref$pos, idx=1:(k+1)),
+                            beta=beta, family=family, seed=seed),
                    SIM=SIM),
               class="dynnetsim")
 }
@@ -136,8 +137,7 @@ generate_group <- function(n, mean, sigma)
 ##' @title Generate Latent Positions or Trajectories
 ##' @param n List of positive integers indicating the number of nodes in each
 ##' cluster, including the reference unit.
-##' @param ref List of mean vectors indicating the location of the reference
-##' units.
+##' @param ref List of vectors indicating the location of the reference units.
 ##' @param mean List of mean vectors indicating the mean for each cluster of
 ##' nodes.
 ##' @param sigma List of covariance matrices, one for each cluster of nodes.
