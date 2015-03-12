@@ -1,24 +1,23 @@
-context("dynnet object constructors and accessors")
+context("Network Constructors and Accessors")
 
-x <- matrix(c(0.0, 1.1, 1.2,
-              1.1, 0.0, 3.0,
-              0.5, 0.3, 0.0), ncol=3, byrow=TRUE)
+x1 <- matrix(c(0, 1, 0,
+               1, 0, 1,
+               0, 1, 0), ncol=3, byrow=TRUE)
 
-net_b  <- dynnet_adjacency(x, directed=TRUE, weighted=FALSE)
-net_b2 <- dynnet_adjacency(list(x, x), directed=TRUE, weighted=FALSE)
-net_w  <- dynnet_adjacency(x, directed=TRUE, weighted=TRUE)
-net_w2 <- dynnet_adjacency(list(x, x), directed=TRUE, weighted=TRUE)
+x2 <- matrix(c(0.0, 1.1, 1.2,
+               1.1, 0.0, 3.0,
+               0.5, 0.3, 0.0), ncol=3, byrow=TRUE)
 
-test_that("get_adjacency returns the adjacency matrices", {
-    expect_equal(get_adjacency(net_w)[[1]], x)
-    expect_equal(get_adjacency(net_w, 1), x)
+net_b  <- dynnet_adjacency(x1)
+net_b2 <- dynnet_adjacency(list(x, x), mode="directed", weighted=NULL)
+
+net_w  <- dynnet_adjacency(x, mode="directed", weighted=TRUE)
+net_w2 <- dynnet_adjacency(list(x, x), mode="directed", weighted=TRUE)
+
+test_that("dynnet object has correct structure", {
+    expect_equal(net_b$nodes, 3)
 })
 
-test_that("dynnet_adjacency is producing binary and weighted networks", {
-    expect_equal(get_adjacency(net_b, 1)[1,1],  0)    
-    expect_equal(get_adjacency(net_b, 1)[2,1],  1)
-    expect_equal(get_adjacency(net_w, 1)[2,1],  1.1)    
-    expect_equal(get_adjacency(net_b2, 2)[2,1], 1)
-    expect_equal(get_adjacency(net_w2), list(x, x))
-    expect_equal(get_adjacency(net_w2, 1:2), list(x, x))        
+test_that("get_adjacency returns the adjacency matrices", {
+    expect_equal(get_adjacency(net_w, period=1)[2,1], x2[2,1])
 })
