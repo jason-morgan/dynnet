@@ -4,8 +4,7 @@
 \alias{dynnet_adjacency}
 \title{Dynamic Network from a List of Adjacency Networks}
 \usage{
-dynnet_adjacency(adj, X = NULL, weighted = FALSE, directed = FALSE,
-  bipartite = FALSE)
+dynnet_adjacency(adj, X = NULL, mode = "lower", weighted = NULL)
 }
 \arguments{
 \item{adj}{List of adjacency matrixes. Single matrices, representing a
@@ -13,17 +12,11 @@ static network, are also supported.}
 
 \item{X}{A \code{data.frame} of nodal covariates. Default is \code{NULL}.}
 
-\item{weighted}{Indicates whether the network is weighted (non-binary). If a
-weighted network is provided, but \code{weighted} is not set to \code{TRUE},
-all elements of the matrices in \code{adj} will be converted to binary
-values, with any value greater than \code{0} equal to \code{1} and all other
-set to \code{0}. Default is \code{FALSE}.}
+\item{mode}{Type of graph. See \code{\link{igraph::graph.adjacency}}.}
 
-\item{directed}{Indicates whether the network is directed. Default is
-\code{FALSE}.}
-
-\item{bipartite}{Indicates whether the network is bipartite. Default is
-\code{FALSE}.}
+\item{weighted}{Indicates whether the network is weighted
+(non-binary). Default is \code{NULL}. See
+\code{\link{igraph::graph.adjacency}} for details.}
 }
 \value{
 A \code{dynnet} object.

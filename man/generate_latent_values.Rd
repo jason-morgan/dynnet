@@ -10,8 +10,7 @@ generate_latent_values(n, ref, mean, sigma)
 \item{n}{List of positive integers indicating the number of nodes in each
 cluster, including the reference unit.}
 
-\item{ref}{List of mean vectors indicating the location of the reference
-units.}
+\item{ref}{List of vectors indicating the location of the reference units.}
 
 \item{mean}{List of mean vectors indicating the mean for each cluster of
 nodes.}
