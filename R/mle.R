@@ -33,7 +33,8 @@ lsm_MLE <- function(model, verbose=TRUE)
     while (MAXITER > iter && (abs(new_lik - old_lik) > tol)) {
         old_lik <- new_lik
 
-        cur   <- MLE_est_2step(theta, model)
+        cur   <- MLE_est_1step(theta, model)
+        ## cur   <- MLE_est_2step(theta, model)
         theta <- cur$theta
 
         if (isTRUE(verbose) && iter %% 5 == 0) {
@@ -49,6 +50,15 @@ lsm_MLE <- function(model, verbose=TRUE)
     }
 
     list(theta=theta, last=cur, model=model)
+}
+
+MLE_est_1step <- function(theta, model)
+{
+    cur <- optim(theta, model$llik, model=model,
+                 method="BFGS",
+                 control=list(trace=0, fnscale=-1))
+    theta <- cur$par
+    list(theta=theta, est=cur)
 }
 
 MLE_est_2step <- function(theta, model)
