@@ -1,64 +1,81 @@
 ## lsm_MLE <- function(network, k=1, start=NULL, family="logit")
-lsm_MLE <- function(model)
+lsm_MLE <- function(model, verbose=TRUE)
 {
-    llik <- mk_log_likelihood(model$family, k=model$k)
+    model$llik <- mk_log_likelihood(model$family, k=model$k)
 
     ## Hacky
     y <- get_adjacency(model$network, period=model$period)
     y <- as.matrix(Matrix::tril(y))
-    y <- y[lower.tri(y)]
+    model$y <- y[lower.tri(y)]
 
-    X     <- model$X
-    b_idx <- 1:ncol(X)
-    Z_idx <- (length(b_idx)+1):(length(model$start))
-    template <- matrix(model$start[Z_idx], ncol=model$k)
+    model$b_idx    <- 1:ncol(model$X)
+    model$Z_idx    <- (length(model$b_idx)+1):(length(model$start))
+    model$template <- matrix(model$start[model$Z_idx], ncol=model$k)
 
-    theta <- c(model$start[b_idx],
-               as.vector(matrix(model$start[Z_idx], ncol=model$k)[-ref$idx,]))
+    theta <- c(model$start[model$b_idx],
+               as.vector(matrix(model$start[model$Z_idx],
+                                ncol=model$k)[-model$ref$idx,]))
 
-    Z_idx <- (length(b_idx)+1):(length(theta))
-
-    tol <- sqrt(.Machine$double.eps)
+    model$Z_idx <- (length(model$b_idx)+1):(length(theta))
 
     ## Initial estimates of Z
-    cur <- optim(theta[Z_idx], MLE_Z_update, llik=llik, theta=theta, y=y, X=X,
-                 b_idx=b_idx, Z_idx=Z_idx, ref_idx=ref$idx, template=template,
-                 ## method="BFGS",
+    cur <- optim(theta[model$Z_idx], MLE_Z_update, theta=theta, model=model,
+                 method="BFGS",
                  control=list(trace=0, fnscale=-1))
-
-    theta[Z_idx] <- cur$par
-    ## theta <- center_Z(theta, b_idx, Z_idx, k)
+    theta[model$Z_idx] <- cur$par
 
     old_lik <- 0
     new_lik <- 1
-    iter <- 0
+    iter    <- 0
     MAXITER <- 100
+    tol     <- sqrt(.Machine$double.eps)
+
     while (MAXITER > iter && (abs(new_lik - old_lik) > tol)) {
         old_lik <- new_lik
-        cur <- optim(theta[b_idx], MLE_b_update, llik=llik, theta=theta, y=y,
-                     X=X, b_idx=b_idx, Z_idx=Z_idx, ref_idx=ref$idx, template=template,
-                     method="Brent", lower=-100, upper=100,
-                     control=list(trace=0, fnscale=-1))
-        theta[b_idx] <- cur$par
 
-        cur <- optim(theta[Z_idx], MLE_Z_update, llik=llik, theta=theta, y=y, X=X,
-                     b_idx=b_idx, Z_idx=Z_idx, ref_idx=ref$idx, template=template,
-                     control=list(trace=0, fnscale=-1))
-        theta[Z_idx] <- cur$par
-        ## theta <- center_Z(theta, b_idx, Z_idx, k)
+        cur   <- MLE_est_2step(theta, model)
+        theta <- cur$theta
 
-        if (iter %% 2 == 0) {
+        if (isTRUE(verbose) && iter %% 5 == 0) {
+            tmpd <- mean(dist(matrix(theta[model$Z_idx], ncol=model$k)))
             cat("Iteration:", iter, "\n")
-            cat("  beta:", theta[b_idx], "\n")
+            cat("  beta:", theta[model$b_idx], "\n")
+            cat("  mean distance:", tmpd, "\n")
             cat("  log-likelihood:", cur$value, "\n")
         }
-        iter <- iter + 1
-        new_lik <- cur$value
+
+        iter    <- iter + 1
+        new_lik <- cur$est$value
     }
 
-    model$b_idx <- b_idx
-    model$Z_idx <- Z_idx
     list(theta=theta, last=cur, model=model)
+}
+
+MLE_est_2step <- function(theta, model)
+{
+    cur <- optim(theta[model$b_idx], MLE_b_update, theta=theta, model=model,
+                 method="Brent", lower=-100, upper=100,
+                 control=list(trace=0, fnscale=-1))
+    theta[model$b_idx] <- cur$par
+
+    cur <- optim(theta[model$Z_idx], MLE_Z_update, theta=theta, model=model,
+                 method="BFGS",
+                 control=list(trace=0, fnscale=-1))
+    theta[model$Z_idx] <- cur$par
+
+    list(theta=theta, est=cur)
+}
+
+MLE_Z_update <- function(Z, theta=NULL, model=NULL)
+{
+    theta[model$Z_idx] <- Z
+    model$llik(theta, model)
+}
+
+MLE_b_update <- function(b, theta=NULL, model=NULL)
+{
+    theta[model$b_idx] <- b
+    model$llik(theta, model)
 }
 
 center_Z <- function(theta, b_idx, Z_idx, k)
@@ -67,25 +84,9 @@ center_Z <- function(theta, b_idx, Z_idx, k)
     c(theta[b_idx], as.vector(Z_est))
 }
 
-MLE_Z_update <- function(Z, llik=NULL, theta=NULL, y=NULL, X=NULL, b_idx=NULL,
-                         Z_idx=NULL, ref_idx=NULL, template=NULL)
+make_Z <- function(theta, Z_idx, template, ref_idx)
 {
-    theta[Z_idx] <- Z
-    llik(theta, y=y, X=X, b_idx=b_idx, Z_idx=Z_idx, ref_idx=ref_idx,
-         template=template)
-}
-
-MLE_b_update <- function(b, llik=NULL, theta=NULL, y=NULL, X=NULL, b_idx=NULL,
-                         Z_idx=NULL, ref_idx=NULL, template=NULL)
-{
-    theta[b_idx] <- b
-    llik(theta, y=y, X=X, b_idx=b_idx, Z_idx=Z_idx, ref_idx=ref_idx,
-         template=template)
-}
-
-make_Z <- function(theta, Z_idx, template, ref_idx, k)
-{
-    template[-ref_idx,] <- matrix(theta[Z_idx], ncol=k)
+    template[-ref_idx,] <- matrix(theta[Z_idx], ncol=ncol(template))
     template
 }
 
@@ -93,13 +94,12 @@ mk_log_likelihood <- function(family, k)
 {
     llik <- llik_fn(family)
 
-    function(theta, y=NULL, X=NULL, b_idx=NULL, Z_idx=NULL, ref_idx=NULL,
-             template=NULL)
+    function(theta, model)
     {
-        b  <- theta[b_idx]
-        Z  <- make_Z(theta, Z_idx, template, ref_idx, k)
+        b  <- theta[model$b_idx]
+        Z  <- make_Z(theta, model$Z_idx, model$template, model$ref$idx)
         d  <- as_distance_vector(Z)
-        lp <- (X %*% b) - d
-        llik(y, lp)
+        lp <- (model$X %*% b) - d
+        llik(model$y, lp)
     }
 }
