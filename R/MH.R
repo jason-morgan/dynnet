@@ -165,24 +165,6 @@ propose_one_Z <- function(idx, state)
     state
 }
 
-llik_logit <- function(y, lp)
-{
-    sum(dbinom(y, 1, plogis(lp), log=TRUE))
-}
-
-llik_poisson <- function(y, lp)
-{
-    sum(dpois(y, 1, exp(lp), log=TRUE))
-}
-
-llik_fn <- function(family)
-{
-    switch(family,
-           "logit"   = llik_logit,
-           "poisson" = llik_poisson,
-           stop("unknown family"))
-}
-
 log_prior_b <- function(b, b_sd=100)
 {
     b_sigma <- diag(b_sd, nrow=length(b))

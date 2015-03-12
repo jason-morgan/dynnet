@@ -1,9 +1,17 @@
-loglik_logit <- function(y, Xb, d)
+llik_fn <- function(family)
 {
-    sum(dbinom(y, 1, plogis(Xb - d), log=TRUE))
+    switch(family,
+           "logit"   = llik_logit,
+           "poisson" = llik_poisson,
+           stop("unknown family"))
 }
 
-loglik_poisson <- function(y, Xb, d)
+llik_logit <- function(y, lp)
 {
-    sum(dpois(y, exp(Xb - d), log=TRUE))
+    sum(dbinom(y, 1, plogis(lp), log=TRUE))
+}
+
+llik_poisson <- function(y, lp)
+{
+    sum(dpois(y, 1, exp(lp), log=TRUE))
 }
