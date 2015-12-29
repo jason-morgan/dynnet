@@ -31,3 +31,16 @@ dynnet_adjacency <- function(adj, X=NULL, mode="lower", weighted=NULL)
                    mode=mode, weighted=weighted),
               class="dynnet")
 }
+
+##' The number of periods in the dynamic network.
+##'
+##' The number of periods in the dynamic network.
+##' @title Number of Periods in the Network
+##' @param net dynnet network object.
+##' @return Number of periods in the (possibly dynamic) network.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @export
+periods.dynnet <- function(net)
+{
+    net$periods
+}

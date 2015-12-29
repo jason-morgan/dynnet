@@ -4,12 +4,13 @@ Version: 0.0.0.9000
 Authors@R: 'Jason W. Morgan <jason.w.morgan@gmail.com> [aut, cre]'
 Description: This model implements several latent space models for
     static and dynamic networks.
-Depends: R (>= 3.1.2)
-Imports: mvtnorm,
-	 igraph,
-	 MCMCpack
+Depends:
+    R (>= 3.1.2)
+Imports:
+    Rcpp
 LinkingTo: Rcpp
-Imports: Rcpp
 License: GPL-3
 LazyData: true
-Suggests: testthat
+Suggests:
+    testthat
+RoxygenNote: 5.0.1
