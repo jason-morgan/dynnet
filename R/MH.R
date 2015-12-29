@@ -1,5 +1,5 @@
-lsm_MH <- function(network, start_b, start_Z, ref_idx, family="logit",
-                   burnin=10000, nsamples=10000)
+lsm_MH <- function(model, verbose=TRUE,
+                   burnin=10000, samplesize=1000, interval=10)
 {
     y <- as.matrix(network$adj[[1]])
     y <- y[lower.tri(y)]
@@ -41,7 +41,6 @@ lsm_MH <- function(network, start_b, start_Z, ref_idx, family="logit",
     cat("\nBurnin stage acceptance rates:")
     cat("\n  b accepted:", state$smry$b_accepted / state$smry$b_iter,
         "\n  Z accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
-
 
     ## Sampling stage
     state$smry$b_accepted <- 0

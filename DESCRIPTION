@@ -8,6 +8,8 @@ Depends: R (>= 3.1.2)
 Imports: mvtnorm,
 	 igraph,
 	 MCMCpack
+LinkingTo: Rcpp
+Imports: Rcpp
 License: GPL-3
 LazyData: true
 Suggests: testthat

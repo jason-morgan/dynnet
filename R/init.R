@@ -22,6 +22,8 @@ init_Z <- function(Y, ref_pos, ref_idx)
 
     ## Geodesic distances
     D <- igraph::shortest.paths(Y)
+    ## D <- scale(D, center=TRUE, scale=FALSE)
+    ## diag(D) <- 0
 
     ## MDS to positions
     Z0 <- cmdscale(D, k)

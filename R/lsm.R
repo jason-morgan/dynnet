@@ -1,4 +1,5 @@
-lsm <- function(network, k=1, period=1, ref=NULL, family="logit", method="MLE")
+lsm <- function(network, k=1, period=1, ref=NULL, family="logit", method="MLE",
+                fit=TRUE, verbose=TRUE)
 {
     ## Construct ref
     ## if (is.null(ref)) {
@@ -24,10 +25,11 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="logit", method="MLE")
     ## Starting values
     model$start <- init_coef(Y, model$X, ref$pos, ref$idx)
 
-    ## ## Number of Z coefficients to estimate.
-    ## model$nZ <- k * (network$nodes - nrow(ref$pos))
+    if (isTRUE(verbose))
+        cat("Starting values:", model$start, "\n")
 
-    ## Dispatch to correct method
-
-    lsm_MLE(model)
+    if (isTRUE(fit))
+        lsm_MLE(model, verbose=verbose)
+    else
+        model
 }

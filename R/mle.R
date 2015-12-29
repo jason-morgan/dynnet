@@ -1,4 +1,3 @@
-## lsm_MLE <- function(network, k=1, start=NULL, family="logit")
 lsm_MLE <- function(model, verbose=TRUE)
 {
     model$llik <- mk_log_likelihood(model$family, k=model$k)
@@ -19,22 +18,24 @@ lsm_MLE <- function(model, verbose=TRUE)
     model$Z_idx <- (length(model$b_idx)+1):(length(theta))
 
     ## Initial estimates of Z
+    if (isTRUE(verbose)) cat("Calculating initial locations...\n")
     cur <- optim(theta[model$Z_idx], MLE_Z_update, theta=theta, model=model,
+                 ## method="SANN",
                  method="BFGS",
-                 control=list(trace=0, fnscale=-1))
+                 control=list(trace=0, fnscale=-1, maxit=100000))
     theta[model$Z_idx] <- cur$par
 
     old_lik <- 0
     new_lik <- 1
     iter    <- 0
-    MAXITER <- 100
+    MAXITER <- 200
     tol     <- sqrt(.Machine$double.eps)
 
     while (MAXITER > iter && (abs(new_lik - old_lik) > tol)) {
         old_lik <- new_lik
 
-        cur   <- MLE_est_1step(theta, model)
-        ## cur   <- MLE_est_2step(theta, model)
+        ## cur   <- MLE_est_1step(theta, model)
+        cur   <- MLE_est_2step(theta, model)
         theta <- cur$theta
 
         if (isTRUE(verbose) && iter %% 5 == 0) {
@@ -49,13 +50,16 @@ lsm_MLE <- function(model, verbose=TRUE)
         new_lik <- cur$est$value
     }
 
-    list(theta=theta, last=cur, model=model)
+    list(theta=center_Z(theta, model$b_idx, model$Z_idx, model$k),
+         last=cur, model=model)
+
+    ## list(theta=theta, last=cur, model=model)
 }
 
 MLE_est_1step <- function(theta, model)
 {
     cur <- optim(theta, model$llik, model=model,
-                 method="BFGS",
+                 ## method="BFGS",
                  control=list(trace=0, fnscale=-1))
     theta <- cur$par
     list(theta=theta, est=cur)
@@ -69,7 +73,7 @@ MLE_est_2step <- function(theta, model)
     theta[model$b_idx] <- cur$par
 
     cur <- optim(theta[model$Z_idx], MLE_Z_update, theta=theta, model=model,
-                 method="BFGS",
+                 ## method="BFGS",
                  control=list(trace=0, fnscale=-1))
     theta[model$Z_idx] <- cur$par
 
@@ -104,12 +108,18 @@ mk_log_likelihood <- function(family, k)
 {
     llik <- llik_fn(family)
 
-    function(theta, model)
+    function(theta, model, lambda=0.25)
     {
         b  <- theta[model$b_idx]
         Z  <- make_Z(theta, model$Z_idx, model$template, model$ref$idx)
         d  <- as_distance_vector(Z)
         lp <- (model$X %*% b) - d
-        llik(model$y, lp)
+
+        ## norm <- apply(Z, 1, function(r) sqrt(sum(r^2)))
+        ## norm <- norm_euclidean(Z)
+        penalty <- distance_penalty(Z)
+
+        ## llik(model$y, lp) - lambda * sum(log(norm))
+        llik(model$y, lp) - lambda * penalty
     }
 }
