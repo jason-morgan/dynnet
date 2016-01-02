@@ -5,6 +5,30 @@
 
 using namespace Rcpp;
 
+// llik_logit
+double llik_logit(NumericVector y, NumericVector lp);
+RcppExport SEXP dynnet_llik_logit(SEXP ySEXP, SEXP lpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lp(lpSEXP);
+    __result = Rcpp::wrap(llik_logit(y, lp));
+    return __result;
+END_RCPP
+}
+// llik_poisson
+double llik_poisson(NumericVector y, NumericVector lp);
+RcppExport SEXP dynnet_llik_poisson(SEXP ySEXP, SEXP lpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type lp(lpSEXP);
+    __result = Rcpp::wrap(llik_poisson(y, lp));
+    return __result;
+END_RCPP
+}
 // norm_euclidean
 NumericVector norm_euclidean(NumericMatrix X);
 RcppExport SEXP dynnet_norm_euclidean(SEXP XSEXP) {
