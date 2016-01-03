@@ -1,4 +1,5 @@
 .Rhistory
 scratch.R
 /tests/testthat/benchmarks.R
-src/*.o
+*.so
+*.o
