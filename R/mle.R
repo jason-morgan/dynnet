@@ -1,3 +1,4 @@
+
 ## lsm_MLE <- function(model, verbose=TRUE)
 ## {
 ##     model$llik <- mk_log_likelihood(model$family, k=model$k)

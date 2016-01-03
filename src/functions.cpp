@@ -48,7 +48,6 @@ NumericVector norm_euclidean(NumericMatrix X)
   return norm;
 }
 
-
 // [[Rcpp::export]]
 double distance_penalty(NumericMatrix X)
 {
