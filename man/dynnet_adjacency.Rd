@@ -4,22 +4,25 @@
 \alias{dynnet_adjacency}
 \title{Dynamic Network from a List of Adjacency Matrices}
 \usage{
-dynnet_adjacency(adj, X = NULL, mode = "lower", weighted = NULL)
+dynnet_adjacency(adj, vattr = NULL, mode = "lower", weighted = NULL)
 }
 \arguments{
 \item{adj}{List of adjacency matrixes. Single matrices, representing a
 static network, are also supported.}
 
-\item{X}{A list of \code{data.frame}s recording nodal covariates for each
-node and periods. This must either have the same number of elements as adj
-or contain a single \code{data.frame}, which will then be used for each time
-period. Default is \code{NULL}.}
+\item{vattr}{List of data.frames specifying the vertex attributes. Must be
+the same length as \code{adj}.}
 
 \item{mode}{Type of graph. See \code{\link{igraph::graph.adjacency}}.}
 
 \item{weighted}{Indicates whether the network is weighted
 (non-binary). Default is \code{NULL}. See
 \code{\link{igraph::graph.adjacency}} for details.}
+
+\item{X}{A list of \code{data.frame}s recording nodal covariates for each
+node and periods. This must either have the same number of elements as
+adj or contain a single \code{data.frame}, which will then be used for
+each time period. Default is \code{NULL}.}
 }
 \value{
 A \code{dynnet} object.
