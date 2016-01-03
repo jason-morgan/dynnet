@@ -1,6 +1,5 @@
-lsm <- function(network, k=1, period=1, ref=NULL,
-                family="bernoulli", method="MLE", fit=TRUE, seed=NULL,
-                verbose=TRUE)
+lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
+                start=start_random, method="MLE", seed=NULL, verbose=TRUE)
 {
     if (!is.null(seed))
         set.seed(seed)
@@ -20,10 +19,10 @@ lsm <- function(network, k=1, period=1, ref=NULL,
     edges <- extract_edges(graph)
 
     ## Set up latent positions matrix
-    pos <- starting_positions(graph, ref, k)
+    pos <- start(graph, ref, k)
 
     beta0 <- qlogis(igraph::edge_density(graph))
-    print(beta0)
+
     theta <- c(beta0, as.vector(pos[-ref$idx,]))
 
     model <- structure(list(edges=edges, period=1, k=k, ref=ref,
@@ -31,15 +30,25 @@ lsm <- function(network, k=1, period=1, ref=NULL,
                             dropped=which(deg == 0), seed=seed),
                        class="dynnetlsm")
 
-    est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
-                 control=list(trace=1, fnscale=-1, maxit=250))
-
-    ## est <- optim(est$par, calc_likelihood, model=model, method="SANN",
-    ##              control=list(trace=1, fnscale=-1, maxit=500000, tmax=50))
+    if (method == "MLE")
+        est <- lsm_MLE(theta, model)
+    else if (method == "MH")
+        est <- lsm_MH(theta, model)
+    else
+        est <- NULL
 
     model$graph <- graph
     model$estimate <- est
+
     model
+}
+
+lsm_MLE <- function(theta, model)
+{
+    est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
+                 control=list(trace=1, fnscale=-1, maxit=500))
+
+    est
 }
 
 insert_ref <- function(pos, ref, k)
@@ -58,13 +67,10 @@ calc_likelihood <- function(theta, model=NULL)
     llik_logit(model$edges, beta0 - as.matrix(dist(pos)))
 }
 
-starting_positions <- function(graph, ref, k)
+start_random <- function(graph, ref, k)
 {
     n <- igraph::vcount(graph)
-    ## For the moment, set random positions
-    ## pos <- matrix(rnorm(n*k), ncol=k, nrow=n)
     pos <- matrix(runif(n*k, min=-0.5, max=0.5), ncol=k, nrow=n)
-    ## pos <- matrix(0, ncol=k, nrow=n)
     pos[ref$idx,] <- ref$pos
     pos
 }
@@ -81,11 +87,6 @@ llik_fn <- function(family)
            "bernoulli" = llik_logit,
            "poisson"   = llik_poisson,
            stop("unknown family"))
-}
-
-plot.dynnetlsm <- function(model)
-{
-    plot(rbind(model$ref$pos, model$estimate$par))
 }
 
 log_posterior_logit <- function(llik_fn, y, lp)
