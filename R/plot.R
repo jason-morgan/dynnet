@@ -1,3 +1,8 @@
+## plot <- function(network, layout=NULL, ...)
+## {
+##     UseMethod("plot")
+## }
+
 plot.dynnet <- function(network, layout=NULL, ...)
 {
     g <- graphs(network)

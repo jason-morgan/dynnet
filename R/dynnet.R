@@ -201,3 +201,23 @@ c.dynnet <- function(..., recursive=FALSE)
     tmp$weighted <- lapply(nets, `[[`, "weighted")
     tmp
 }
+
+##' Get the edge density of each graph in the network
+##'
+##' Get the edge density of each graph in the network
+##' @title Network Edge Density
+##' @param network dynnet network object.
+##' @return Edge densities
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @export
+edge_density <- function(network)
+{
+    UseMethod("edge_density")
+}
+
+##' @export
+##' @rdname edge_density
+edge_density.dynnet <- function(network)
+{
+    gapply(network, igraph::edge_density)
+}

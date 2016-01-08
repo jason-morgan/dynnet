@@ -1,183 +1,127 @@
-lsm_MH <- function(model, verbose=TRUE,
-                   burnin=10000, samplesize=1000, interval=10)
+lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
+                                              MCMC.interval=10))
 {
-    y <- as.matrix(network$adj[[1]])
-    y <- y[lower.tri(y)]
-    X <- network$X[[1]]
+    beta0 <- theta[1]
+    Z     <- matrix(theta[-1], ncol=model$k)
+    pos   <- insert_ref(Z, model$ref, model$k)
+    D     <- as.matrix(dist(pos))
+    posterior <- log_posterior_logit(model$edges, beta0 - D, beta0, Z)
 
-    log_posterior <- mk_log_posterior(family)
+    state <- list(edges=model$edges,
+                  beta0=beta0,
+                  Z=Z,
+                  ref=model$ref,
+                  k=model$k,
+                  posterior=posterior,
+                  iter=0,
+                  accept=0)
 
-    k       <- ncol(start_Z)
-    b_len   <- length(start_b)
-    Z_len   <- length(start_Z)
+    BURN <- control$MCMC.samplesize * 100
 
-    samples <- matrix(0, ncol=(1 + b_len + Z_len), nrow=nsamples)
-    colnames(samples) <- c(paste0("b", 0:(b_len-1)),
-                           paste0("Z", 1:Z_len),
-                           "lp")
-
-    b_idx <- 1:b_len
-    Z_idx <- (b_len+1):(b_len+Z_len)
-    p_idx <- ncol(samples)
-
-    samples[1,b_idx] <- start_b
-    samples[1,Z_idx] <- as.vector(start_Z)
-    samples[1,p_idx] <- log_posterior(y, start_b, start_Z, X, ref_idx)
-
-    model <- list(y=y, X=X, ref_idx=ref_idx, family=family,
-                  log_posterior=log_posterior)
-    state <- list(theta=list(b=start_b, Z=start_Z, posterior=samples[1,p_idx]),
-                  smry=list(b_accepted=0, b_iter=0, Z_accepted=0, Z_iter=0))
-
-    ## Burnin stage
-    cat("Beginning burnin stage: ")
-    for (i in 2:burnin) {
-        if (i %% 1000 == 0) cat(i, "...", sep="")
-
-        state <- MCMC_step_Z(state, model)
-        state <- MCMC_step_b(state, model)
+    ## burnin
+    i <- 1
+    cat("BURNIN (", BURN, "): ", sep="")
+    while (i <= 10) {
+        cat(i * BURN/10, " ")
+        state <- MH_sampler(state, BURN/10)
+        i <- i + 1
     }
+    cat("done\n")
 
-    cat("\nBurnin stage acceptance rates:")
-    cat("\n  b accepted:", state$smry$b_accepted / state$smry$b_iter,
-        "\n  Z accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
+    cat("BURNIN Acceptance rate:", state$accept / state$iter, "\n")
+    state$iter <- 0
+    state$accept <- 0
 
-    ## Sampling stage
-    state$smry$b_accepted <- 0
-    state$smry$b_iter     <- 0
-    state$smry$Z_accepted <- 0
-    state$smry$Z_iter     <- 0
+    ## sampling
+    record <- matrix(0, ncol=(length(beta0) + length(Z) + 1),
+                     nrow=control$MCMC.samplesize)
+    colnames(record) <- c("posterior", "beta0", paste0("z", 1:length(Z)))
+    ## record[state$iter,] <- c(state$posterior, state$beta0, as.vector(state$Z))
 
-    cat("\nBeginning sampling stage: ")
-    for (i in 1:nsamples) {
-        if (i %% 1000 == 0) cat(i, "...", sep="")
-
-        state <- MCMC_step_Z(state, model)
-        state <- MCMC_step_b(state, model)
-
-        samples[i,b_idx] <- state$theta$b
-        samples[i,Z_idx] <- as.vector(state$theta$Z)
-        samples[i,p_idx] <- state$theta$posterior
+    i <- 1
+    cat("SAMPLING (", control$MCMC.samplesize, ")", sep="")
+    while (i <= control$MCMC.samplesize) {
+        cat(i, " ")
+        state <- MH_sampler(state, control$MCMC.interval)
+        record[i,] <- c(state$posterior, state$beta0, as.vector(state$Z))
+        i <-  i + 1
     }
+    cat("done\n")
 
-    cat("\nSampling stage acceptance rates:")
-    cat("\n  b accepted:", state$smry$b_accepted / state$smry$b_iter,
-        "\n  Z accepted:", state$smry$Z_accepted / state$smry$Z_iter, "\n")
+    cat("SAMPLING Acceptance rate:", state$accept / state$iter, "\n")
 
-    list(samples, idx=list(ref=ref_idx, b=b_idx, Z=Z_idx, lp=p_idx))
+    list(state=state, record=coda::mcmc(record))
 }
 
-MCMC_step_Z <- function(state, model)
+MH_sampler <- function(state, iter)
 {
-    idx <- seq_len(nrow(state$theta$Z))[-model$ref_idx]
-    order_idx <- sample(idx, length(idx), replace=TRUE)
-
-    ## Update the latent locations of each node separately.
-    ## for (i in order_idx) {
-    ##     proposal <- propose_one_Z(i, state)
-    ##     update   <- MH_update(proposal, state, model)
-    ##     state    <- update$state
-    ##     state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
-    ##     state$smry$Z_iter <- state$smry$Z_iter + 1
-    ## }
-
-    proposal <- propose_Z(model$ref_idx, state)
-    update   <- MH_update(proposal, state, model)
-    state    <- update$state
-    state$smry$Z_accepted <- state$smry$Z_accepted + update$accept
-    state$smry$Z_iter <- state$smry$Z_iter + 1
+    for (i in 1:iter) {
+        proposal <- list(Z=propose_Z(state), beta0=propose_beta0(state))
+        state    <- MH_update(proposal, state)
+    }
 
     state
 }
 
-MCMC_step_b <- function(state, model)
+MH_update <- function(proposal, state)
 {
-    proposal <- propose_b(state)
-    update   <- MH_update(proposal, state, model)
-    state    <- update$state
-    state$smry$b_accepted <- state$smry$b_accepted + update$accept
-    state$smry$b_iter <- state$smry$b_iter + 1
+    state$iter <- state$iter + 1
 
-    state
-}
+    pos <- insert_ref(proposal$Z, state$ref, state$k)
+    D   <- as.matrix(dist(pos))
+    proposal$posterior <- log_posterior_logit(state$edges,
+                                              proposal$beta0 - D,
+                                              proposal$beta0,
+                                              proposal$Z)
 
-MH_update <- function(proposal, state, model)
-{
-    new_post <- model$log_posterior(model$y, proposal$theta$b, proposal$theta$Z,
-                                    model$X, model$ref_idx)
-
-    p <- exp(new_post - state$theta$posterior)
-    accept <- 0
+    p <- exp(proposal$posterior - state$posterior)
 
     if (runif(1) < p) {
-        state$theta <- proposal$theta
-        state$theta$posterior <- new_post
-        accept <- 1
+        state$beta0  <- proposal$beta0
+        state$Z      <- proposal$Z
+        state$posterior <- proposal$posterior
+        state$accept <- state$accept + 1
     }
 
-    list(state=state, accept=accept)
-}
-
-mk_log_posterior <- function(family="logit")
-{
-    llik <- llik_fn(family)
-
-    function(y, b, Z, X, ref_idx)
-    {
-        d  <- as_distance_vector(Z)
-        lp <- (X %*% b) - d
-        llik(y, lp) + log_prior_b(b) + log_prior_Z(Z, ref_idx)
-    }
-}
-
-propose_b <- function(state)
-{
-    ## scale <- 1 / (length(state$theta$b) + 1)
-    ## e <- rnorm(length(state$theta$b), mean=0, sd=scale)
-    e <- runif(1, min=-2, max=2)
-    state$theta$b <- abs(state$theta$b + e)
     state
 }
 
-propose_Z <- function(ref_idx, state)
+propose_Z <- function(state)
 {
-    n <- nrow(state$theta$Z[-ref_idx,])
-    N <- n * ncol(state$theta$Z)
-    ## scale <- 1 / sqrt(N)
-    scale <- 1 / sqrt(N)
+    n <- 1
+    N <- nrow(state$Z)
+    idx <- sample(seq_len(N), n)
+    state$Z[idx,] <- state$Z[idx,] + rnorm(state$k*n, mean=0, sd=1/N)
 
-    e <- mvtnorm::rmvnorm(n,
-                          mean=rep(0, ncol(state$theta$Z)),
-                          sigma=diag(ncol(state$theta$Z))*scale)
-
-    state$theta$Z[-ref_idx,] <- state$theta$Z[-ref_idx,] + e
-    state
+    state$Z
 }
 
-propose_one_Z <- function(idx, state)
+propose_beta0 <- function(state)
 {
-    ## scale <- 1 / (ncol(state$theta$Z) - 1)
-    scale <- 1.5
-    e <- rnorm(ncol(state$theta$Z), mean=0, sd=scale)
-
-    state$theta$Z[idx,] <- state$theta$Z[idx,] + e
-    state
+    abs(state$beta0 + rnorm(1, sd=0.8))
 }
 
-log_prior_b <- function(b, b_sd=100)
+log_posterior_logit <- function(y, lp, beta0, Z)
 {
-    b_sigma <- diag(b_sd, nrow=length(b))
-    B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
+    llik <- llik_logit(y, lp)
+    prior_beta0 <- log_prior_beta0(beta0)
+    prior_Z <- log_prior_Z(Z)
 
-    ## Matches the prior used by HRH (2002)
-    ## B_prior <- dgamma(b, 1, scale=1, log=TRUE)
-    B_prior
+    llik + prior_beta0 + prior_Z
 }
 
-log_prior_Z <- function(Z, ref_idx, Z_sd=100)
+log_prior_beta0 <- function(beta0)
+{
+    ## dnorm(beta0, mean=1, sd=0.1)
+
+    ## Matches the prior used by HRH (2002).
+    dgamma(beta0, 1, scale=1, log=TRUE)
+}
+
+log_prior_Z <- function(Z, Z_sd=2)
 {
     Z_sigma <- diag(Z_sd, nrow=ncol(Z))
-    Z_prior <- sum(mvtnorm::dmvnorm(Z[-ref_idx,], sigma=Z_sigma, log=TRUE))
+    Z_prior <- sum(mvtnorm::dmvnorm(Z, sigma=Z_sigma, log=TRUE))
 
     Z_prior
 }

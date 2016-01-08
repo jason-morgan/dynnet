@@ -1,5 +1,6 @@
 lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
-                start=start_random, method="MLE", seed=NULL, verbose=TRUE)
+                start=start_random, method="MLE", seed=NULL, verbose=TRUE,
+                control=list(MCMC.samplesize=2^10, MCMC.interval=10))
 {
     if (!is.null(seed))
         set.seed(seed)
@@ -18,11 +19,9 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
     ## This will need to be modified for directed networks
     edges <- extract_edges(graph)
 
-    ## Set up latent positions matrix
+    ## Starting values
     pos <- start(graph, ref, k)
-
-    beta0 <- qlogis(igraph::edge_density(graph))
-
+    beta0 <- 1
     theta <- c(beta0, as.vector(pos[-ref$idx,]))
 
     model <- structure(list(edges=edges, period=1, k=k, ref=ref,
@@ -31,9 +30,9 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
                        class="dynnetlsm")
 
     if (method == "MLE")
-        est <- lsm_MLE(theta, model)
+        est <- lsm_MLE(theta, model, control=control)
     else if (method == "MH")
-        est <- lsm_MH(theta, model)
+        est <- lsm_MH(theta, model, control=control)
     else
         est <- NULL
 
@@ -43,7 +42,7 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
     model
 }
 
-lsm_MLE <- function(theta, model)
+lsm_MLE <- function(theta, model, control)
 {
     est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
                  control=list(trace=1, fnscale=-1, maxit=500))
@@ -87,27 +86,4 @@ llik_fn <- function(family)
            "bernoulli" = llik_logit,
            "poisson"   = llik_poisson,
            stop("unknown family"))
-}
-
-log_posterior_logit <- function(llik_fn, y, lp)
-{
-    llik(y, lp) + log_prior_b(b) + log_prior_Z(Z, ref_idx)
-}
-
-log_prior_b <- function(b, b_sd=100)
-{
-    b_sigma <- diag(b_sd, nrow=length(b))
-    B_prior <- sum(mvtnorm::dmvnorm(b, sigma=b_sigma, log=TRUE))
-
-    ## Matches the prior used by HRH (2002)
-    ## B_prior <- dgamma(b, 1, scale=1, log=TRUE)
-    B_prior
-}
-
-log_prior_Z <- function(Z, ref_idx, Z_sd=100)
-{
-    Z_sigma <- diag(Z_sd, nrow=ncol(Z))
-    Z_prior <- sum(mvtnorm::dmvnorm(Z[-ref_idx,], sigma=Z_sigma, log=TRUE))
-
-    Z_prior
 }

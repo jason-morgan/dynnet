@@ -5,64 +5,22 @@
 ##' @param n Positive integer. Number of nodes in the network.
 ##' @param k Positive integer. Number of dimensions in the latent space.
 ##' @param periods Positive integer. Number of periods in the dynnamic
-##' network. If \code{k=1}, a static network is generated.
-##' @param groups Positive integer. Number of groups, or clusters, of nodes in
-##' the network.
-##' @param X List of model matrices of covariates of size \code{N}-by-\code{m},
-##' where \code{N} is the \emph{number of dyads} in the network and \code{m} is
-##' the number of covariates. If \code{NULL} an intercept is used. If a single
-##' matrix is provided, this model matrix will be used for all periods.
-##' @param beta Vector of coefficients of length \code{m}. Default is
-##' \code{c(0.5)} for the coefficient on the intercept.
-##' @param ref_pos Matrix representing the positions of the reference units in
-##' the latent space. Should be of dimensions \code{k+1}-by-\code{k}. Default is
-##' to randomly choose \code{k+1} points on a \code{k}-dimensional hypersphere.
-##' @param mean_pos Matrix representing the mean position of the groups. Should
-##' be of dimensions \code{g}-by-\code{k}. Default is to use the origin for all
-##' groups.
-##' @param sigma_pos List of \code{g} covariance matrices used to generate the
-##' locations of nodes in each group. Default is a list of \code{g}
-##' \code{k}-by-\code{k} identity matrices.
-##' @param ref_traj Matrix representing the trajectories of the reference units
-##' through the latent space. Should be of dimensions
-##' \code{k+1}-by-\code{k}. For identification, the locations of the reference
-##' units should ideally be fixed.
-##' @param mean_traj Matrix representing the mean of the node
-##' trajectories. Default is a \code{k}-by-\code{g} matrix of zeros.
-##' @param sigma_traj List of \code{g} covariance matrices used to generate the
-##' trajectories. Default is a list of \code{g} \code{k}-by-\code{k} identity
-##' matrices. Note: this may imply too much movement in the nodes.
-##' @param traj_fn Function taking a positive integer representing the period
-##' for which to generate the network as well as a position and trajectory
-##' matrix. Default is \code{\link{linear_trajectory}}.
+##'     network. If \code{k=1}, a static network is generated.
+##' @param vattr List of vertex attributes. One data.frame per period.
+##' @param ref_fn Function to generate the reference positions. Function must
+##'     return a list reference positions and indices.
 ##' @param seed Set the seed before generating the networks to assure
-##' replicability. Default is \code{NULL}.
-##' @param family Character string in \code{c("logit", "poisson")}.
+##'     replicability. Default is \code{NULL}.
+##' @param family Character string in \code{c("bernoulli", "poisson")}.
 ##' @param ... Further parameters to be passed to subsequent functions.
 ##' @return A \code{dynsim} object.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 ##' @export
-simulate_network <- function(n, k=1, g=1, periods=1,
-                             X       = NULL,
-                             beta    = 0.5,
-                             ref     = list(pos=default_ref_pos(k),
-                                            idx=1:(k+1),
-                                            traj=matrix(0, ncol=k, nrow=k+1),
-                                            sigma_traj=NULL),
-                             groups  = list(mean=matrix(0, ncol=k, nrow=g),
-                                            sigma=rep(list(diag(k)), g),
-                                            traj=matrix(0, ncol=k, nrow=g),
-                                            sigma_traj = rep(list(diag(k)),
-                                                             g)),
-                             traj_fn = trajectory_linear,
-                             seed=NULL, family="logit", ...)
+simulate_dynnet <- function(n, k=1, periods=1,
+                             vattr   = NULL,
+                             ref_fn  = default_ref_pos(k),
+                             seed=NULL, family="bernoulli", ...)
 {
-    if (is.null(X)) {
-        X <- rep(list(matrix(1, n*(n-1)/2)), periods)
-    } else if (is.matrix(X)) {
-        X <- rep(list(X), periods)
-    }
-
     if (!is.null(seed))
         set.seed(seed)
 
@@ -70,20 +28,9 @@ simulate_network <- function(n, k=1, g=1, periods=1,
         stop("Number of nodes cannot be less than the number of reference",
              " nodes (k+1)")
 
-    if (!all(dim(ref$pos) == c(k+1, k)))
-        stop("Reference position matrix (ref$pos) has the wrong dimensions.",
-             " Should be of\n  dimensions (k+1, k).")
-
-    if (!all(dim(groups$mean) == c(g, k)))
-        stop("Group position matrix (groups$mean) has the wrong dimensions.",
-             " should be of\n  dimensions (g, k).")
-
-    if (g != length(groups$sigma))
-        stop("Wrong number of group covariances supplied. Length of",
-             " groups$sigma should be equal\n  to the number of groups.")
-
-    if (list_all_equal(split(ref$pos, 1:nrow(ref$pos))))
-        warning("Reference positions all equal. You probably don't want this.")
+    if (!is.null(vattr) & length(vattr) != periods)
+        stop("vattr must has the same length as the number of periods to be",
+             " simulated.")
 
     ## Generate starting position matrix
     N   <- split_n(n-nrow(ref$pos), g)
@@ -106,29 +53,14 @@ simulate_network <- function(n, k=1, g=1, periods=1,
     adj <- mapply(generate_adjacency, mv, Xb, family=family, SIMPLIFY=FALSE)
 
     ## Create dynnet object.
-    wght <- if (family == "logit") NULL else TRUE
-    SIM <- dynnet_adjacency(adj, X=X, weighted=wght)
+    wght <- if (family == "bernoulli") NULL else TRUE
+    SIM <- dynnet_adjacency(adj, weighted=wght)
 
     structure(list(DGP=list(positions=pos, trajectories=traj,
                             ref=list(pos=ref$pos, idx=1:(k+1)),
                             beta=beta, family=family, seed=seed),
                    SIM=SIM),
               class="dynnetsim")
-}
-
-##' Generate a cluster of nodes in \code{k}-dimensional latent space.
-##'
-##' Generate a cluster of nodes in \code{k}-dimensional latent space.
-##' @title Generate a Cluster of Nodes
-##' @param n Positive integer. The number of nodes in the cluster.
-##' @param mean Mean vector. Default is the a zero vector of length \code{k}.
-##' @param sigma Covariance matrix. Default is a \code{k}-by-\code{k} identity
-##' matrix.
-##' @return Numeric matrix with dimensions of \code{(n-1)}-by-\code{k}.
-##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-generate_group <- function(n, mean, sigma)
-{
-    mvtnorm::rmvnorm(n, mean=mean, sigma=sigma)
 }
 
 ##' Generate latent positions or trajectories for nodes in the network.
@@ -168,8 +100,8 @@ generate_latent_values <- function(n, ref, mean, sigma)
 dgp_fn <- function(family)
 {
     switch(family,
-           "logit"   = function(lp) { rbinom(length(lp), 1, plogis(lp)) },
-           "poisson" = function(lp) { rpois(length(lp), lambda=exp(lp)) },
+           "bernoulli" = function(lp) { rbinom(length(lp), 1, plogis(lp)) },
+           "poisson"   = function(lp) { rpois(length(lp), lambda=exp(lp)) },
            stop("unknown family"))
 }
 
