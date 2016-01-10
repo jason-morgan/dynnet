@@ -1,6 +1,26 @@
+##' Static latent space model for static networks.
+##'
+##' Estimate a latent space model for static networks as introduced by HRH
+##' (2002).
+##' @title Static Latent Space Model
+##' @param network \code{dynnet} network object.
+##' @param k Integer. Number of dimensions for the latent space.
+##' @param period Integer. Period to select from the network object.
+##' @param ref List. Reference vertex information.
+##' @param family String specifying the model family. Only \code{bernoulli} is
+##'     currently supported.
+##' @param start Function to use to get the starting values for the latent
+##'     locations of each vertex.
+##' @param method String specifying the estimation method. Either \code{MLE}
+##'     (maximum likelihood) or \code{MH} (a Metropolis Hastings algorithm).
+##' @param seed Random seed.
+##' @param verbose Boolean.
+##' @param control List of control parameters to be used for
+##' @return \code{dynnetlsm} model object.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
                 start=start_random, method="MLE", seed=NULL, verbose=TRUE,
-                control=list(MCMC.samplesize=2^10, MCMC.interval=10))
+                control=control.lsm())
 {
     if (!is.null(seed))
         set.seed(seed)

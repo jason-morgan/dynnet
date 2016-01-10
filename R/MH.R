@@ -68,7 +68,10 @@ MH_update <- function(proposal, state)
 {
     state$iter <- state$iter + 1
 
-    pos <- insert_ref(proposal$Z, state$ref, state$k)
+    n <- nrow(proposal$Z) + length(state$ref$idx)
+    est_idx <- (1:n)[-state$ref$idx]
+
+    pos <- .C_insert_ref(state$ref$idx, state$ref$pos, est_idx, proposal$Z)
     D   <- .C_dist_euclidean(pos)
     proposal$posterior <- .C_log_posterior_logit(state$edges,
                                                  proposal$beta0 - D,
