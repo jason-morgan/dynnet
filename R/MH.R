@@ -37,7 +37,6 @@ lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
     record <- matrix(0, ncol=(length(beta0) + length(Z) + 1),
                      nrow=control$MCMC.samplesize)
     colnames(record) <- c("posterior", "beta0", paste0("z", 1:length(Z)))
-    ## record[state$iter,] <- c(state$posterior, state$beta0, as.vector(state$Z))
 
     i <- 1
     cat("SAMPLING (", control$MCMC.samplesize, "): ", sep="")
@@ -87,43 +86,3 @@ MH_update <- function(proposal, state)
 
     state
 }
-
-## propose_Z <- function(state)
-## {
-##     n <- 1
-##     N <- nrow(state$Z)
-##     idx <- sample(seq_len(N), n)
-##     state$Z[idx,] <- state$Z[idx,] + rnorm(state$k*n, mean=0, sd=1/N)
-
-##     state$Z
-## }
-
-## propose_beta0 <- function(state)
-## {
-##     abs(state$beta0 + rnorm(1, sd=0.8))
-## }
-
-## log_posterior_logit <- function(y, lp, beta0, Z)
-## {
-##     llik <- .C_llik_logit(y, lp)
-##     prior_beta0 <- .C_log_prior_beta0(beta0)
-##     prior_Z <- .C_log_prior_Z(Z)
-
-##     llik + prior_beta0 + prior_Z
-## }
-
-## log_prior_beta0 <- function(beta0)
-## {
-##     ## dnorm(beta0, mean=1, sd=0.1)
-
-##     ## Matches the prior used by HRH (2002).
-##     dgamma(beta0, 1, scale=1, log=TRUE)
-## }
-
-## log_prior_Z <- function(Z, Z_sd=2)
-## {
-##     Z_sigma <- diag(Z_sd, nrow=ncol(Z))
-##     Z_prior <- sum(mvtnorm::dmvnorm(Z, sigma=Z_sigma, log=TRUE))
-
-##     Z_prior
-## }
