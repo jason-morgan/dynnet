@@ -1,32 +1,63 @@
 #include <Rcpp.h>
+
+// #include <RcppArmadillo.h>
+// #include <RcppArmadilloExtensions/sample.h>
+
+// // [[Rcpp::depends(RcppArmadillo)]]
+
 using namespace Rcpp;
 
-// [[Rcpp::export]]
-double llik_logit(NumericVector y, NumericVector lp)
+// [[Rcpp::export(.C_insert_ref)]]
+NumericMatrix C_insert_ref(IntegerVector ref_idx,
+			 NumericMatrix ref_pos,
+			 IntegerVector est_idx,
+			 NumericMatrix est_pos)
 {
-  int n = y.size();
-  double llik = 0;
+  NumericMatrix result(ref_idx.size() + est_idx.size(),
+		       ref_pos.ncol());
 
-  for (int i = 0; i < n; ++i) {
-    double p = R::plogis(lp[i], 0.0, 1.0, 1.0, false);
-    llik += R::dbinom(y[i], 1.0, p, true);
+  // R indices start at 1
+  ref_idx = ref_idx - 1;
+  est_idx = est_idx - 1;
+
+  for (int i = 0; i < ref_idx.size(); ++i) {
+    result(ref_idx[i],_) = ref_pos(i,_);
   }
 
-  return(llik);
+  for (int i = 0; i < est_idx.size(); ++i) {
+    result(est_idx[i],_) = est_pos(i,_);
+  }
+
+  return(result);
 }
 
-// [[Rcpp::export]]
-double llik_poisson(NumericVector y, NumericVector lp)
+double C_euclidean(NumericVector x, NumericVector y)
 {
-  int n = y.size();
-  double llik = 0;
+  double d = 0.0;
 
-  for (int i = 0; i < n; ++i) {
-    double lambda = exp(lp[i]);
-    llik += R::dpois(y[i], lambda, true);
+  for (int i = 0; i < x.size(); ++i) {
+    d += pow(x[i] - y[i], 2.0);
   }
 
-  return(llik);
+  return(sqrt(d));
+}
+
+// [[Rcpp::export(.C_dist_euclidean)]]
+NumericVector C_dist_euclidean(NumericMatrix X)
+{
+  int nrow = X.nrow();
+
+  NumericVector d(nrow * (nrow-1) / 2);
+  int idx = 0;
+
+  for (int j=0; j < (nrow-1); ++j) {
+    for (int i=(j+1); i < nrow; ++i) {
+      d[idx] = C_euclidean(X(j,_), X(i,_));
+      idx++;
+    }
+  }
+
+  return(d);
 }
 
 // [[Rcpp::export]]

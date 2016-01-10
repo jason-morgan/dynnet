@@ -53,17 +53,15 @@ lsm_MLE <- function(theta, model, control)
 insert_ref <- function(pos, ref, k)
 {
     n <- nrow(pos) + length(ref$idx)
-    new <- matrix(rnorm(n*k), ncol=k, nrow=n)
-    new[(1:n)[-ref$idx],] <- pos
-    new[ref$idx,] <- ref$pos
-    new
+
+    .C_insert_ref(ref$idx, ref$pos, (1:n)[-ref$idx], pos)
 }
 
 calc_likelihood <- function(theta, model=NULL)
 {
     beta0 <- theta[1]
     pos <- insert_ref(matrix(theta[-1], ncol=model$k), model$ref, model$k)
-    llik_logit(model$edges, beta0 - as.matrix(dist(pos)))
+    llik_logit(model$edges, beta0 - .C_dist_euclidean(pos))
 }
 
 start_random <- function(graph, ref, k)
