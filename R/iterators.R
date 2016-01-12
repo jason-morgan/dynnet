@@ -1,4 +1,4 @@
-dapply <- function(n, fn, ...)
+dmap <- function(n, fn, ...)
 {
     output <- vector("list", length=n*(n-1)/2)
     idx <- 1
