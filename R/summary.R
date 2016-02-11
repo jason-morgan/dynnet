@@ -1,9 +1,9 @@
-vcov.dynnetlsm <- function(object, ...)
+vcov.lsmfit <- function(object, ...)
 {
     solve(-object$estimate$hessian)
 }
 
-coef.dynnetlsm <- function(object, ...)
+coef.lsmfit <- function(object, ...)
 {
     idx <- 1                # need a more general way to track the beta coef idx
     if (object$method == "MLE") {
@@ -15,7 +15,7 @@ coef.dynnetlsm <- function(object, ...)
     est
 }
 
-summary.dynnetlsm <- function(object, ...)
+summary.lsmfit <- function(object, ...)
 {
     idx <- 1                             # beta coef idx
     est <- coef(object)
@@ -26,7 +26,7 @@ summary.dynnetlsm <- function(object, ...)
     tbl
 }
 
-logLik.dynnetlsm <- function(object, ...)
+logLik.lsmfit <- function(object, ...)
 {
     if (object$method == "MLE") {
         llik <- object$estimate$value

@@ -16,7 +16,7 @@
 ##' @param seed Random seed.
 ##' @param verbose Boolean.
 ##' @param control List of control parameters to be used for
-##' @return \code{dynnetlsm} model object.
+##' @return \code{lsmfit} model object.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
                 start=start_random, method="MLE", seed=NULL, verbose=TRUE,
@@ -48,7 +48,7 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
                             family=family,
                             dropped=which(deg == 0), seed=seed,
                             verbose=verbose),
-                       class="dynnetlsm")
+                       class="lsmfit")
 
     if (method == "MLE") {
         est <- lsm_MLE(theta, model, control=control)

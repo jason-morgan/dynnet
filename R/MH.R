@@ -16,10 +16,9 @@ lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
                   iter=0,
                   accept=0)
 
-    BURN <- control$MCMC.samplesize * 100
-    ## BURN <- 2^23
-
     ## burnin
+    BURN <- control$MCMC.burnin
+
     i <- 1
     cat("BURNIN (", BURN, "): ", sep="")
     while (i <= 10) {

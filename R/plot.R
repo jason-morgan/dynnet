@@ -20,7 +20,7 @@ plot.dynnet <- function(network, layout=NULL, ...)
         plot(g[[i]], ...)
 }
 
-plot.dynnetlsm <- function(model, ...)
+plot.lsmfit <- function(model, ...)
 {
     if (model$method == "MLE") {
         est <- model$estimate$par[-1]            # need a more general way to track the beta coef idx
