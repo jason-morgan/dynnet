@@ -1,0 +1,9 @@
+* Tasks
+
+  + [ ] Complete coef() for MH models.
+  + [ ] Fix plot() for 1d models.
+  + [ ] Add BIC/AIC.
+  + [ ] Add warning to summary() that the SEs are not right.
+  + [ ] Add functionality for multiple predictors.
+  + [ ] Change MH algorithm to update /each/ vertex Z (random order) on each
+    iteration.
