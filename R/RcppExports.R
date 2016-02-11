@@ -21,11 +21,11 @@ distance_penalty <- function(X) {
     .Call('dynnet_distance_penalty', PACKAGE = 'dynnet', X)
 }
 
-C_llik_logit <- function(y, lp) {
+.C_llik_logit <- function(y, lp) {
     .Call('dynnet_C_llik_logit', PACKAGE = 'dynnet', y, lp)
 }
 
-C_llik_poisson <- function(y, lp) {
+.C_llik_poisson <- function(y, lp) {
     .Call('dynnet_C_llik_poisson', PACKAGE = 'dynnet', y, lp)
 }
 

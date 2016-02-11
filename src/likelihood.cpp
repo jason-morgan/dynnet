@@ -2,7 +2,7 @@
 
 using namespace Rcpp;
 
-// [[Rcpp::export(C_llik_logit)]]
+// [[Rcpp::export(.C_llik_logit)]]
 double C_llik_logit(NumericVector y, NumericVector lp)
 {
   int n = y.size();
@@ -16,7 +16,7 @@ double C_llik_logit(NumericVector y, NumericVector lp)
   return(llik);
 }
 
-// [[Rcpp::export(C_llik_poisson)]]
+// [[Rcpp::export(.C_llik_poisson)]]
 double C_llik_poisson(NumericVector y, NumericVector lp)
 {
   int n = y.size();

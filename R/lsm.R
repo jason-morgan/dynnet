@@ -46,16 +46,21 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
 
     model <- structure(list(edges=edges, period=1, k=k, ref=ref,
                             family=family,
-                            dropped=which(deg == 0), seed=seed),
+                            dropped=which(deg == 0), seed=seed,
+                            verbose=verbose),
                        class="dynnetlsm")
 
-    if (method == "MLE")
+    if (method == "MLE") {
         est <- lsm_MLE(theta, model, control=control)
-    else if (method == "MH")
+    } else if (method == "MH") {
+        ## Use MLE positions as starting values for the MH alg.
+        theta <- lsm_MLE(theta, model, control=control)$par
         est <- lsm_MH(theta, model, control=control)
-    else
+    } else {
         est <- NULL
+    }
 
+    model$method <- method
     model$graph <- graph
     model$estimate <- est
 
@@ -65,7 +70,8 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
 lsm_MLE <- function(theta, model, control)
 {
     est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
-                 control=list(trace=1, fnscale=-1, maxit=500))
+                 control=list(trace=model$verbose, fnscale=-1, maxit=500),
+                 hessian=TRUE)
 
     est
 }
@@ -81,7 +87,7 @@ calc_likelihood <- function(theta, model=NULL)
 {
     beta0 <- theta[1]
     pos <- insert_ref(matrix(theta[-1], ncol=model$k), model$ref, model$k)
-    llik_logit(model$edges, beta0 - .C_dist_euclidean(pos))
+    .C_llik_logit(model$edges, beta0 - .C_dist_euclidean(pos))
 }
 
 start_random <- function(graph, ref, k)
