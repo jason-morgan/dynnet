@@ -1,8 +1,3 @@
-## plot <- function(network, layout=NULL, ...)
-## {
-##     UseMethod("plot")
-## }
-
 plot.dynnet <- function(network, layout=NULL, ...)
 {
     g <- graphs(network)
@@ -25,7 +20,7 @@ plot.dynnet <- function(network, layout=NULL, ...)
         plot(g[[i]], ...)
 }
 
-plot.dynnetlsm <- function(model)
+plot.dynnetlsm <- function(model, ...)
 {
     if (model$method == "MLE") {
         est <- model$estimate$par[-1]            # need a more general way to track the beta coef idx
@@ -34,20 +29,14 @@ plot.dynnetlsm <- function(model)
         ## do stuff
     }
 
+    G <- model$graph
+
     all_pos <- insert_ref(est, model$ref, model$k)
-    Y <- as_adj(model$graph)
 
-    plot(all_pos, pch=19, col="white")
+    if (model$k == 1)
+        all_pos <- cbind(all_pos, 0)
 
-    plot_line <- function(Y, pos)
-    {
-        if (Y[.I,.J] != 0)
-            lines(pos[c(.I,.J),1], pos[c(.I,.J),2])
-    }
+    Y <- as_adj(G)
 
-    fordyads(nrow(all_pos), plot_line, Y=Y, pos=all_pos)
-
-    points(est, pch=19)
-    points(model$ref$pos, col="red", cex=1.25)
-    points(model$ref$pos, col="red", pch=19, cex=0.5)
+    plot(G, layout=all_pos, ...)
 }
