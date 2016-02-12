@@ -1,8 +1,8 @@
 lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
                                               MCMC.interval=10))
 {
-    beta0 <- theta[1]
-    Z     <- matrix(theta[-1], ncol=model$k)
+    beta0 <- theta[model$beta_idx]
+    Z     <- matrix(theta[-model$beta_idx], ncol=model$k)
     pos   <- insert_ref(Z, model$ref, model$k)
     D     <- as.vector(.C_dist_euclidean(pos))
     posterior <- .C_log_posterior_logit(model$edges, beta0 - D, beta0, Z)
@@ -33,15 +33,15 @@ lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
     state$accept <- 0
 
     ## sampling
-    record <- matrix(0, ncol=(length(beta0) + length(Z) + 1),
+    samples <- matrix(0, ncol=(length(beta0) + length(Z) + 1),
                      nrow=control$MCMC.samplesize)
-    colnames(record) <- c("posterior", "beta0", paste0("z", 1:length(Z)))
+    colnames(samples) <- c("posterior", "beta0", paste0("z", 1:length(Z)))
 
     i <- 1
     cat("SAMPLING (", control$MCMC.samplesize, "): ", sep="")
     while (i <= control$MCMC.samplesize) {
         state <- MH_sampler(state, control$MCMC.interval)
-        record[i,] <- c(state$posterior, state$beta0, as.vector(state$Z))
+        samples[i,] <- c(state$posterior, state$beta0, as.vector(state$Z))
         if (i %% 100 == 0) cat(i, " ")
         i <-  i + 1
     }
@@ -49,7 +49,7 @@ lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
 
     cat("SAMPLING Acceptance rate:", state$accept / state$iter, "\n")
 
-    list(state=state, record=coda::mcmc(record))
+    list(state=state, samples=coda::mcmc(samples))
 }
 
 MH_sampler <- function(state, n_iter)

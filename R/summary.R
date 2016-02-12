@@ -5,11 +5,11 @@ vcov.lsmfit <- function(object, ...)
 
 coef.lsmfit <- function(object, ...)
 {
-    idx <- 1                # need a more general way to track the beta coef idx
+    idx <- object$beta_idx
     if (object$method == "MLE") {
         est <- object$estimate$par[idx]
     } else if (object$method == "MH") {
-        est <- summary(model$estimate$record)$statistics[idx+1,"Mean"]
+        est <- summary(model$estimate$samples)$statistics[idx+1,"Mean"]
     }
 
     est
@@ -17,7 +17,7 @@ coef.lsmfit <- function(object, ...)
 
 summary.lsmfit <- function(object, ...)
 {
-    idx <- 1                             # beta coef idx
+    idx <- object$beta_idx
     est <- coef(object)
     se  <- sqrt(diag(vcov(object))[idx])
 

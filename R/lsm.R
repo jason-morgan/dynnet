@@ -45,7 +45,7 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
     theta <- c(beta0, as.vector(pos[-ref$idx,]))
 
     model <- structure(list(edges=edges, period=1, k=k, ref=ref,
-                            family=family,
+                            family=family, beta_idx=1,
                             dropped=which(deg == 0), seed=seed,
                             verbose=verbose),
                        class="lsmfit")
@@ -85,8 +85,9 @@ insert_ref <- function(pos, ref, k)
 
 calc_likelihood <- function(theta, model=NULL)
 {
-    beta0 <- theta[1]
-    pos <- insert_ref(matrix(theta[-1], ncol=model$k), model$ref, model$k)
+    beta0 <- theta[model$beta_idx]
+    pos <- insert_ref(matrix(theta[-model$beta_idx], ncol=model$k),
+                      model$ref, model$k)
     .C_llik_logit(model$edges, beta0 - .C_dist_euclidean(pos))
 }
 

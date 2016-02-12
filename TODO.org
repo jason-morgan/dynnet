@@ -1,5 +1,6 @@
 * Tasks
 
+  + [ ] Add procrustes indentification strategy.
   + [ ] Complete coef() for MH models.
   + [ ] Fix plot() for 1d models.
   + [ ] Add BIC/AIC.

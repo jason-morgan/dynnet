@@ -33,7 +33,7 @@ locations of each vertex.}
 \item{control}{List of control parameters to be used for}
 }
 \value{
-\code{dynnetlsm} model object.
+\code{lsmfit} model object.
 }
 \description{
 Static latent space model for static networks.
