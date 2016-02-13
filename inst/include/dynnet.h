@@ -7,6 +7,14 @@
 using namespace arma;
 using namespace Rcpp;
 
+// structs
+struct LSMState
+{
+    NumericVector b;
+    NumericVector Z;
+    double posterior;
+};
+
 // likelihoods
 double C_llik_logit(NumericVector y, NumericVector lp);
 double C_llik_poisson(NumericVector y, NumericVector lp);

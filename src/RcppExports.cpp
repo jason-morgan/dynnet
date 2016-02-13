@@ -7,34 +7,6 @@
 
 using namespace Rcpp;
 
-// C_dmvnorm
-arma::vec C_dmvnorm(arma::mat x, arma::rowvec mean, arma::mat sigma, bool logd);
-RcppExport SEXP dynnet_C_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP, SEXP logdSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
-    Rcpp::traits::input_parameter< arma::rowvec >::type mean(meanSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
-    Rcpp::traits::input_parameter< bool >::type logd(logdSEXP);
-    __result = Rcpp::wrap(C_dmvnorm(x, mean, sigma, logd));
-    return __result;
-END_RCPP
-}
-// C_insert_ref
-NumericMatrix C_insert_ref(IntegerVector ref_idx, NumericMatrix ref_pos, IntegerVector est_idx, NumericMatrix est_pos);
-RcppExport SEXP dynnet_C_insert_ref(SEXP ref_idxSEXP, SEXP ref_posSEXP, SEXP est_idxSEXP, SEXP est_posSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< IntegerVector >::type ref_idx(ref_idxSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type ref_pos(ref_posSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type est_idx(est_idxSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type est_pos(est_posSEXP);
-    __result = Rcpp::wrap(C_insert_ref(ref_idx, ref_pos, est_idx, est_pos));
-    return __result;
-END_RCPP
-}
 // C_dist_euclidean
 NumericVector C_dist_euclidean(NumericMatrix X);
 RcppExport SEXP dynnet_C_dist_euclidean(SEXP XSEXP) {
@@ -65,6 +37,20 @@ BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
     __result = Rcpp::wrap(distance_penalty(X));
+    return __result;
+END_RCPP
+}
+// C_dmvnorm
+arma::vec C_dmvnorm(arma::mat x, arma::rowvec mean, arma::mat sigma, bool logd);
+RcppExport SEXP dynnet_C_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP, SEXP logdSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< arma::mat >::type x(xSEXP);
+    Rcpp::traits::input_parameter< arma::rowvec >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
+    Rcpp::traits::input_parameter< bool >::type logd(logdSEXP);
+    __result = Rcpp::wrap(C_dmvnorm(x, mean, sigma, logd));
     return __result;
 END_RCPP
 }
@@ -147,6 +133,20 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type beta0(beta0SEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
     __result = Rcpp::wrap(C_log_posterior_logit(y, lp, beta0, Z));
+    return __result;
+END_RCPP
+}
+// C_insert_ref
+NumericMatrix C_insert_ref(IntegerVector ref_idx, NumericMatrix ref_pos, IntegerVector est_idx, NumericMatrix est_pos);
+RcppExport SEXP dynnet_C_insert_ref(SEXP ref_idxSEXP, SEXP ref_posSEXP, SEXP est_idxSEXP, SEXP est_posSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< IntegerVector >::type ref_idx(ref_idxSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type ref_pos(ref_posSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type est_idx(est_idxSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type est_pos(est_posSEXP);
+    __result = Rcpp::wrap(C_insert_ref(ref_idx, ref_pos, est_idx, est_pos));
     return __result;
 END_RCPP
 }
