@@ -1,14 +1,14 @@
 lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
                                               MCMC.interval=10))
 {
-    beta0 <- theta[model$beta_idx]
+    alpha <- theta[model$beta_idx]
     Z     <- matrix(theta[-model$beta_idx], ncol=model$k)
     pos   <- insert_ref(Z, model$ref, model$k)
     D     <- as.vector(.C_dist_euclidean(pos))
-    posterior <- .C_log_posterior_logit(model$edges, beta0 - D, beta0, Z)
+    posterior <- .C_log_posterior_logit(model$edges, alpha - D, alpha, Z)
 
     state <- list(edges=model$edges,
-                  beta0=beta0,
+                  alpha=alpha,
                   Z=Z,
                   ref=model$ref,
                   k=model$k,
@@ -33,15 +33,15 @@ lsm_MH <- function(theta, model, control=list(MCMC.samplesize=2^10,
     state$accept <- 0
 
     ## sampling
-    samples <- matrix(0, ncol=(length(beta0) + length(Z) + 1),
+    samples <- matrix(0, ncol=(length(alpha) + length(Z) + 1),
                      nrow=control$MCMC.samplesize)
-    colnames(samples) <- c("posterior", "beta0", paste0("z", 1:length(Z)))
+    colnames(samples) <- c("posterior", "alpha", paste0("z", 1:length(Z)))
 
     i <- 1
     cat("SAMPLING (", control$MCMC.samplesize, "): ", sep="")
     while (i <= control$MCMC.samplesize) {
         state <- MH_sampler(state, control$MCMC.interval)
-        samples[i,] <- c(state$posterior, state$beta0, as.vector(state$Z))
+        samples[i,] <- c(state$posterior, state$alpha, as.vector(state$Z))
         if (i %% 100 == 0) cat(i, " ")
         i <-  i + 1
     }
@@ -56,7 +56,7 @@ MH_sampler <- function(state, n_iter)
 {
     for (i in 1:n_iter) {
         proposal <- list(Z     = .C_propose_Z(state$Z),
-                         beta0 = .C_propose_beta0(state$beta0))
+                         alpha = .C_propose_alpha(state$alpha))
         state    <- MH_update(proposal, state)
     }
 
@@ -73,18 +73,32 @@ MH_update <- function(proposal, state)
     pos <- .C_insert_ref(state$ref$idx, state$ref$pos, est_idx, proposal$Z)
     D   <- .C_dist_euclidean(pos)
     proposal$posterior <- .C_log_posterior_logit(state$edges,
-                                                 proposal$beta0 - D,
-                                                 proposal$beta0,
+                                                 proposal$alpha - D,
+                                                 proposal$alpha,
                                                  proposal$Z)
 
     p <- exp(proposal$posterior - state$posterior)
 
     if (runif(1) < p) {
-        state$beta0  <- proposal$beta0
+        state$alpha  <- proposal$alpha
         state$Z      <- proposal$Z
         state$posterior <- proposal$posterior
         state$accept <- state$accept + 1
     }
 
     state
+}
+
+lsm_MH_C <- function(theta, model, control=list(MCMC.samplesize=2^10,
+                                                MCMC.interval=10))
+{
+    alpha <- theta[1]
+    Z     <- insert_ref(matrix(theta[-1], ncol=model$k), model$ref, model$k)
+    Z_idx <- (1:nrow(Z))[-model$ref$idx]
+    X <- matrix(0.0)
+    beta <- c(0)
+
+    .C_lsm_MH(model$edges, X, Z_idx, model$k,
+              control$MCMC.burnin, control$MCMC.samplesize,
+              control$MCMC.interval, alpha, beta, Z)
 }

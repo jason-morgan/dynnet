@@ -7,34 +7,149 @@
 using namespace Rcpp;
 using namespace arma;
 
-// [[Rcpp::export(.C_propose_Z)]]
-NumericMatrix C_propose_Z(NumericMatrix Z)
+LSMState copy_lsm_state(LSMState *State)
 {
-  int n = 1;
-  int R = Z.nrow();
-  int C = Z.ncol();
-  NumericMatrix result(clone(Z));
-  IntegerVector row_idx = Range(0, R-1);
-  IntegerVector idx = Rcpp::RcppArmadillo::sample(row_idx, n, FALSE,
-						  NumericVector::create());
-  for (int i = 0; i < n; ++i) {
-    result(idx[i],_) = Z(idx[i],_) + rnorm(C, 0.0, 1.0/R);
+
+  LSMState x = { State->alpha,
+		 State->beta,
+		 State->Z,
+		 State->posterior,
+		 State->alpha_accept,
+		 State->beta_accept,
+		 State->Z_accept};
+  return x;
+}
+
+// [[Rcpp::export(.C_lsm_MH)]]
+List C_lsm_MH(NumericVector y,
+	      NumericMatrix X,	// model matrix
+	      NumericVector Z_idx,
+	      int k,
+	      int burnin,
+	      int samplesize,
+	      int interval,
+	      double alpha,
+	      NumericVector beta,
+	      NumericMatrix Z)
+{
+  LSMModel Model = {y, X, Z_idx, k, burnin, samplesize, interval};
+  LSMState State = {alpha, beta, Z, 0.0, 0, 0, 0};
+  // update for more beta
+  NumericMatrix samples(Model.samplesize,
+			(1 + ((State.Z).nrow() * (State.Z).ncol())));
+  State.posterior = C_lsm_posterior(&Model, &State);
+
+  // burnin
+  for (int i=0; i < Model.burnin; ++i) {
+    if (i % 1000 == 0)
+      Rcpp::checkUserInterrupt();
+
+    C_lsm_update_Z(&Model, &State);
+    C_lsm_update_alpha(&Model, &State);
   }
 
-  return(result);
+  // sampling
+  for (int s=0; s < Model.samplesize; ++s) {
+    for (int i=0; i < Model.interval; ++i) {
+      if (i % 1000 == 0)
+	Rcpp::checkUserInterrupt();
+
+      C_lsm_update_Z(&Model, &State);
+      C_lsm_update_alpha(&Model, &State);
+    }
+    save_sample(&State, &samples, s);
+  }
+
+  return Rcpp::List::create(Rcpp::Named("alpha") = State.alpha,
+			    Rcpp::Named("Z") = State.Z,
+			    Rcpp::Named("posterior") = State.posterior,
+			    Rcpp::Named("alpha_accept") = State.alpha_accept,
+			    Rcpp::Named("Z_accept") = State.Z_accept,
+			    Rcpp::Named("samples") = samples);
 }
 
-// [[Rcpp::export(.C_propose_beta0)]]
-double C_propose_beta0(double beta0)
+void save_sample(LSMState *State, NumericMatrix *samples, int s)
 {
-  return(std::abs(beta0 + R::rnorm(0.0, 0.8)));
+  int n = 1 + ((State->Z).nrow() * (State->Z).ncol());
+  NumericVector x(n);
+  x[0] = State->alpha;
+
+  int i = 1;
+  for (int c = 0; c < (State->Z).ncol(); ++c) {
+    for (int r = 0; r < (State->Z).nrow(); ++r) {
+      x[i] = State->Z(r,c);
+      ++i;
+    }
+  }
+
+  (*samples)(s,_) = x;
 }
 
-// [[Rcpp::export(.C_log_prior_beta0)]]
-double C_log_prior_beta0(double beta0)
+double C_lsm_posterior(LSMModel *Model, LSMState *State)
+{
+  NumericVector lp = (State->alpha - C_dist_euclidean(State->Z));
+  return C_log_posterior_logit(Model->y, lp, State->alpha, State->Z);
+}
+
+void C_lsm_update_alpha(LSMModel *Model, LSMState *State)
+{
+  LSMState Proposal = copy_lsm_state(State);
+  double orig_alpha = Proposal.alpha;
+  Proposal.alpha = std::abs(Proposal.alpha + R::rnorm(0.0, 1.0));
+  double new_posterior = C_lsm_posterior(Model, &Proposal);
+
+  double r = R::runif(0,1);
+  double p = exp(new_posterior - Proposal.posterior);
+
+  if (r < p) {
+    Proposal.posterior = new_posterior;
+    Proposal.alpha_accept++;
+  }
+  else {
+    Proposal.alpha = orig_alpha;
+  }
+
+  State->alpha = Proposal.alpha;
+  State->posterior = Proposal.posterior;
+  State->alpha_accept = Proposal.alpha_accept;
+}
+
+void C_lsm_update_Z(LSMModel *Model, LSMState *State)
+{
+  int R = (State->Z).nrow();
+  int C = (State->Z).ncol();
+  NumericVector idx = Model->Z_idx - 1;	// R indices start at 1
+
+  LSMState Proposal = copy_lsm_state(State);
+  NumericMatrix orig_Z = clone(Proposal.Z);
+
+  for (int i=0; i < idx.size(); ++i) {
+    Proposal.Z(idx[i], _) = Proposal.Z(idx[i], _)
+      + rnorm(C, 0.0, 1.0/idx.size());
+  }
+
+  double new_posterior = C_lsm_posterior(Model, &Proposal);
+  double r = R::runif(0, 1);
+  double p = exp(new_posterior - Proposal.posterior);
+
+  if (r < p) {
+    Proposal.posterior = new_posterior;
+    Proposal.Z_accept++;
+  }
+  else {
+    Proposal.Z = orig_Z;
+  }
+
+  State->Z = Proposal.Z;
+  State->posterior = Proposal.posterior;
+  State->Z_accept = Proposal.Z_accept;
+}
+
+// [[Rcpp::export(.C_log_prior_alpha)]]
+double C_log_prior_alpha(double alpha)
 {
   // Matches the prior used by HRH (2002)
-  return(R::dgamma(beta0, 1.0, 1.0, 1));
+  return(R::dgamma(alpha, 1.0, 1.0, 1));
 }
 
 // [[Rcpp::export(.C_log_prior_Z)]]
@@ -53,10 +168,10 @@ double C_log_prior_Z(NumericMatrix Z)
 
 // [[Rcpp::export(.C_log_posterior_logit)]]
 double C_log_posterior_logit(NumericVector y, NumericVector lp,
-			     double beta0, NumericMatrix Z)
+			     double alpha, NumericMatrix Z)
 {
   double post = C_llik_logit(y, lp)
-    + C_log_prior_beta0(beta0) + C_log_prior_Z(Z);
+    + C_log_prior_alpha(alpha) + C_log_prior_Z(Z);
 
-  return(post);
+  return post;
 }

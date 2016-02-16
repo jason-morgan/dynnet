@@ -25,24 +25,20 @@ distance_penalty <- function(X) {
     .Call('dynnet_C_llik_poisson', PACKAGE = 'dynnet', y, lp)
 }
 
-.C_propose_Z <- function(Z) {
-    .Call('dynnet_C_propose_Z', PACKAGE = 'dynnet', Z)
+.C_lsm_MH <- function(y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z) {
+    .Call('dynnet_C_lsm_MH', PACKAGE = 'dynnet', y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z)
 }
 
-.C_propose_beta0 <- function(beta0) {
-    .Call('dynnet_C_propose_beta0', PACKAGE = 'dynnet', beta0)
-}
-
-.C_log_prior_beta0 <- function(beta0) {
-    .Call('dynnet_C_log_prior_beta0', PACKAGE = 'dynnet', beta0)
+.C_log_prior_alpha <- function(alpha) {
+    .Call('dynnet_C_log_prior_alpha', PACKAGE = 'dynnet', alpha)
 }
 
 .C_log_prior_Z <- function(Z) {
     .Call('dynnet_C_log_prior_Z', PACKAGE = 'dynnet', Z)
 }
 
-.C_log_posterior_logit <- function(y, lp, beta0, Z) {
-    .Call('dynnet_C_log_posterior_logit', PACKAGE = 'dynnet', y, lp, beta0, Z)
+.C_log_posterior_logit <- function(y, lp, alpha, Z) {
+    .Call('dynnet_C_log_posterior_logit', PACKAGE = 'dynnet', y, lp, alpha, Z)
 }
 
 .C_insert_ref <- function(ref_idx, ref_pos, est_idx, est_pos) {

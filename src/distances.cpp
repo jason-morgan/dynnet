@@ -2,7 +2,7 @@
 
 using namespace Rcpp;
 
-double C_euclidean(NumericVector x, NumericVector y)
+inline double C_euclidean(NumericVector x, NumericVector y)
 {
   double d = 0.0;
 

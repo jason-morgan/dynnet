@@ -41,8 +41,8 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
 
     ## Starting values
     pos <- start(graph, ref, k)
-    beta0 <- 1
-    theta <- c(beta0, as.vector(pos[-ref$idx,]))
+    alpha <- 1
+    theta <- c(alpha, as.vector(pos[-ref$idx,]))
 
     model <- structure(list(edges=edges, period=1, k=k, ref=ref,
                             family=family, beta_idx=1,
@@ -53,9 +53,12 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
     if (method == "MLE") {
         est <- lsm_MLE(theta, model, control=control)
     } else if (method == "MH") {
-        ## Use MLE positions as starting values for the MH alg.
         theta <- lsm_MLE(theta, model, control=control)$par
-        est <- lsm_MH(theta, model, control=control)
+        est   <- lsm_MH_C(theta, model, control=control)
+
+        ## remove fixed values
+        rm_idx <- which(apply(est$samples, 2, var) == 0)
+        est$samples <- coda::mcmc(est$samples[,-rm_idx])
     } else {
         est <- NULL
     }
@@ -85,10 +88,10 @@ insert_ref <- function(pos, ref, k)
 
 calc_likelihood <- function(theta, model=NULL)
 {
-    beta0 <- theta[model$beta_idx]
+    alpha <- theta[model$beta_idx]
     pos <- insert_ref(matrix(theta[-model$beta_idx], ncol=model$k),
                       model$ref, model$k)
-    .C_llik_logit(model$edges, beta0 - .C_dist_euclidean(pos))
+    .C_llik_logit(model$edges, alpha - .C_dist_euclidean(pos))
 }
 
 start_random <- function(graph, ref, k)
