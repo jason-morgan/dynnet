@@ -3,10 +3,10 @@
 using namespace Rcpp;
 
 // [[Rcpp::export(.C_insert_ref)]]
-NumericMatrix C_insert_ref(IntegerVector ref_idx,
-			   NumericMatrix ref_pos,
-			   IntegerVector est_idx,
-			   NumericMatrix est_pos)
+NumericMatrix insert_ref(IntegerVector ref_idx,
+			 NumericMatrix ref_pos,
+			 IntegerVector est_idx,
+			 NumericMatrix est_pos)
 {
   NumericMatrix result(ref_idx.size() + est_idx.size(),
 		       ref_pos.ncol());

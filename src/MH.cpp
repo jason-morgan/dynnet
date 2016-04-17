@@ -9,14 +9,13 @@ using namespace arma;
 
 LSMState copy_lsm_state(LSMState *State)
 {
-
   LSMState x = { State->alpha,
 		 State->beta,
 		 State->Z,
 		 State->posterior,
 		 State->alpha_accept,
 		 State->beta_accept,
-		 State->Z_accept};
+		 State->Z_accept };
   return x;
 }
 
@@ -30,22 +29,25 @@ List C_lsm_MH(NumericVector y,
 	      int interval,
 	      double alpha,
 	      NumericVector beta,
-	      NumericMatrix Z)
+	      NumericMatrix Z,
+	      String family)
 {
   LSMModel Model = {y, X, Z_idx, k, burnin, samplesize, interval};
+  if (family == "bernoulli")
+    Model.lsm_posterior_fn = log_posterior_logit;
+
   LSMState State = {alpha, beta, Z, 0.0, 0, 0, 0};
-  // update for more beta
   NumericMatrix samples(Model.samplesize,
 			(1 + ((State.Z).nrow() * (State.Z).ncol())));
-  State.posterior = C_lsm_posterior(&Model, &State);
+  State.posterior = Model.lsm_posterior_fn(&Model, &State);
 
   // burnin
   for (int i=0; i < Model.burnin; ++i) {
     if (i % 1000 == 0)
       Rcpp::checkUserInterrupt();
 
-    C_lsm_update_Z(&Model, &State);
-    C_lsm_update_alpha(&Model, &State);
+    lsm_update_Z(&Model, &State);
+    lsm_update_alpha(&Model, &State);
   }
 
   // sampling
@@ -54,8 +56,8 @@ List C_lsm_MH(NumericVector y,
       if (i % 1000 == 0)
 	Rcpp::checkUserInterrupt();
 
-      C_lsm_update_Z(&Model, &State);
-      C_lsm_update_alpha(&Model, &State);
+      lsm_update_Z(&Model, &State);
+      lsm_update_alpha(&Model, &State);
     }
     save_sample(&State, &samples, s);
   }
@@ -85,18 +87,12 @@ void save_sample(LSMState *State, NumericMatrix *samples, int s)
   (*samples)(s,_) = x;
 }
 
-double C_lsm_posterior(LSMModel *Model, LSMState *State)
-{
-  NumericVector lp = (State->alpha - C_dist_euclidean(State->Z));
-  return C_log_posterior_logit(Model->y, lp, State->alpha, State->Z);
-}
-
-void C_lsm_update_alpha(LSMModel *Model, LSMState *State)
+void lsm_update_alpha(LSMModel *Model, LSMState *State)
 {
   LSMState Proposal = copy_lsm_state(State);
   double orig_alpha = Proposal.alpha;
   Proposal.alpha = std::abs(Proposal.alpha + R::rnorm(0.0, 1.0));
-  double new_posterior = C_lsm_posterior(Model, &Proposal);
+  double new_posterior = (Model->lsm_posterior_fn)(Model, &Proposal);
 
   double r = R::runif(0,1);
   double p = exp(new_posterior - Proposal.posterior);
@@ -114,7 +110,7 @@ void C_lsm_update_alpha(LSMModel *Model, LSMState *State)
   State->alpha_accept = Proposal.alpha_accept;
 }
 
-void C_lsm_update_Z(LSMModel *Model, LSMState *State)
+void lsm_update_Z(LSMModel *Model, LSMState *State)
 {
   int R = (State->Z).nrow();
   int C = (State->Z).ncol();
@@ -128,7 +124,7 @@ void C_lsm_update_Z(LSMModel *Model, LSMState *State)
       + rnorm(C, 0.0, 1.0/idx.size());
   }
 
-  double new_posterior = C_lsm_posterior(Model, &Proposal);
+  double new_posterior = (Model->lsm_posterior_fn)(Model, &Proposal);
   double r = R::runif(0, 1);
   double p = exp(new_posterior - Proposal.posterior);
 
@@ -145,33 +141,31 @@ void C_lsm_update_Z(LSMModel *Model, LSMState *State)
   State->Z_accept = Proposal.Z_accept;
 }
 
-// [[Rcpp::export(.C_log_prior_alpha)]]
-double C_log_prior_alpha(double alpha)
+double log_posterior_logit(LSMModel *Model, LSMState *State)
 {
-  // Matches the prior used by HRH (2002)
-  return(R::dgamma(alpha, 1.0, 1.0, 1));
+  NumericVector lp = (State->alpha - dist_euclidean(State->Z));
+  double post = llik_logit(Model, lp)
+    + log_prior_alpha(Model, State)
+    + log_prior_Z(Model, State);
+
+  return post;
 }
 
-// [[Rcpp::export(.C_log_prior_Z)]]
-double C_log_prior_Z(NumericMatrix Z)
+double log_prior_alpha(LSMModel *Model, LSMState *State)
 {
-  int n = Z.ncol();
+  // Matches the prior used by HRH (2002)
+  return(R::dgamma(State->alpha, 1.0, 1.0, 1));
+}
+
+double log_prior_Z(LSMModel *Model, LSMState *State)
+{
+  int n = State->Z.ncol();
   NumericVector mu(n);
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
   sigma.fill_diag(2.0);
 
-  return(sum(C_dmvnorm(as<arma::mat>(Z), as<arma::rowvec>(mu),
-		       as<arma::mat>(sigma), true)));
-}
-
-// [[Rcpp::export(.C_log_posterior_logit)]]
-double C_log_posterior_logit(NumericVector y, NumericVector lp,
-			     double alpha, NumericMatrix Z)
-{
-  double post = C_llik_logit(y, lp)
-    + C_log_prior_alpha(alpha) + C_log_prior_Z(Z);
-
-  return post;
+  return(sum(dmvnorm(as<arma::mat>(State->Z), as<arma::rowvec>(mu),
+		     as<arma::mat>(sigma), true)));
 }

@@ -54,7 +54,7 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
         est <- lsm_MLE(theta, model, control=control)
     } else if (method == "MH") {
         theta <- lsm_MLE(theta, model, control=control)$par
-        est   <- lsm_MH_C(theta, model, control=control)
+        est   <- lsm_MH(theta, model, control=control)
 
         ## remove fixed values
         rm_idx <- which(apply(est$samples, 2, var) == 0)

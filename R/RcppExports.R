@@ -2,7 +2,7 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 .C_dist_euclidean <- function(X) {
-    .Call('dynnet_C_dist_euclidean', PACKAGE = 'dynnet', X)
+    .Call('dynnet_dist_euclidean', PACKAGE = 'dynnet', X)
 }
 
 norm_euclidean <- function(X) {
@@ -14,7 +14,7 @@ distance_penalty <- function(X) {
 }
 
 .C_dmvnorm <- function(x, mean, sigma, logd = FALSE) {
-    .Call('dynnet_C_dmvnorm', PACKAGE = 'dynnet', x, mean, sigma, logd)
+    .Call('dynnet_dmvnorm', PACKAGE = 'dynnet', x, mean, sigma, logd)
 }
 
 .C_llik_logit <- function(y, lp) {
@@ -25,23 +25,11 @@ distance_penalty <- function(X) {
     .Call('dynnet_C_llik_poisson', PACKAGE = 'dynnet', y, lp)
 }
 
-.C_lsm_MH <- function(y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z) {
-    .Call('dynnet_C_lsm_MH', PACKAGE = 'dynnet', y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z)
-}
-
-.C_log_prior_alpha <- function(alpha) {
-    .Call('dynnet_C_log_prior_alpha', PACKAGE = 'dynnet', alpha)
-}
-
-.C_log_prior_Z <- function(Z) {
-    .Call('dynnet_C_log_prior_Z', PACKAGE = 'dynnet', Z)
-}
-
-.C_log_posterior_logit <- function(y, lp, alpha, Z) {
-    .Call('dynnet_C_log_posterior_logit', PACKAGE = 'dynnet', y, lp, alpha, Z)
+.C_lsm_MH <- function(y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z, family) {
+    .Call('dynnet_C_lsm_MH', PACKAGE = 'dynnet', y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z, family)
 }
 
 .C_insert_ref <- function(ref_idx, ref_pos, est_idx, est_pos) {
-    .Call('dynnet_C_insert_ref', PACKAGE = 'dynnet', ref_idx, ref_pos, est_idx, est_pos)
+    .Call('dynnet_insert_ref', PACKAGE = 'dynnet', ref_idx, ref_pos, est_idx, est_pos)
 }
 

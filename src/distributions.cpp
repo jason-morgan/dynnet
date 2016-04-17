@@ -12,10 +12,10 @@ using namespace arma;
 const double log2pi = std::log(2.0 * M_PI);
 
 // [[Rcpp::export(.C_dmvnorm)]]
-arma::vec C_dmvnorm(arma::mat x,
-		    arma::rowvec mean,
-		    arma::mat sigma,
-		    bool logd = false)
+arma::vec dmvnorm(arma::mat x,
+		  arma::rowvec mean,
+		  arma::mat sigma,
+		  bool logd = false)
 {
   int n = x.n_rows;
   int xdim = x.n_cols;

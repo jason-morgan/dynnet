@@ -7,14 +7,14 @@
 
 using namespace Rcpp;
 
-// C_dist_euclidean
-NumericVector C_dist_euclidean(NumericMatrix X);
-RcppExport SEXP dynnet_C_dist_euclidean(SEXP XSEXP) {
+// dist_euclidean
+NumericVector dist_euclidean(NumericMatrix X);
+RcppExport SEXP dynnet_dist_euclidean(SEXP XSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
     Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
-    __result = Rcpp::wrap(C_dist_euclidean(X));
+    __result = Rcpp::wrap(dist_euclidean(X));
     return __result;
 END_RCPP
 }
@@ -40,9 +40,9 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-// C_dmvnorm
-arma::vec C_dmvnorm(arma::mat x, arma::rowvec mean, arma::mat sigma, bool logd);
-RcppExport SEXP dynnet_C_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP, SEXP logdSEXP) {
+// dmvnorm
+arma::vec dmvnorm(arma::mat x, arma::rowvec mean, arma::mat sigma, bool logd);
+RcppExport SEXP dynnet_dmvnorm(SEXP xSEXP, SEXP meanSEXP, SEXP sigmaSEXP, SEXP logdSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
@@ -50,7 +50,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::rowvec >::type mean(meanSEXP);
     Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
     Rcpp::traits::input_parameter< bool >::type logd(logdSEXP);
-    __result = Rcpp::wrap(C_dmvnorm(x, mean, sigma, logd));
+    __result = Rcpp::wrap(dmvnorm(x, mean, sigma, logd));
     return __result;
 END_RCPP
 }
@@ -79,8 +79,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_lsm_MH
-List C_lsm_MH(NumericVector y, NumericMatrix X, NumericVector Z_idx, int k, int burnin, int samplesize, int interval, double alpha, NumericVector beta, NumericMatrix Z);
-RcppExport SEXP dynnet_C_lsm_MH(SEXP ySEXP, SEXP XSEXP, SEXP Z_idxSEXP, SEXP kSEXP, SEXP burninSEXP, SEXP samplesizeSEXP, SEXP intervalSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP ZSEXP) {
+List C_lsm_MH(NumericVector y, NumericMatrix X, NumericVector Z_idx, int k, int burnin, int samplesize, int interval, double alpha, NumericVector beta, NumericMatrix Z, String family);
+RcppExport SEXP dynnet_C_lsm_MH(SEXP ySEXP, SEXP XSEXP, SEXP Z_idxSEXP, SEXP kSEXP, SEXP burninSEXP, SEXP samplesizeSEXP, SEXP intervalSEXP, SEXP alphaSEXP, SEXP betaSEXP, SEXP ZSEXP, SEXP familySEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
@@ -94,49 +94,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
-    __result = Rcpp::wrap(C_lsm_MH(y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z));
+    Rcpp::traits::input_parameter< String >::type family(familySEXP);
+    __result = Rcpp::wrap(C_lsm_MH(y, X, Z_idx, k, burnin, samplesize, interval, alpha, beta, Z, family));
     return __result;
 END_RCPP
 }
-// C_log_prior_alpha
-double C_log_prior_alpha(double alpha);
-RcppExport SEXP dynnet_C_log_prior_alpha(SEXP alphaSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    __result = Rcpp::wrap(C_log_prior_alpha(alpha));
-    return __result;
-END_RCPP
-}
-// C_log_prior_Z
-double C_log_prior_Z(NumericMatrix Z);
-RcppExport SEXP dynnet_C_log_prior_Z(SEXP ZSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
-    __result = Rcpp::wrap(C_log_prior_Z(Z));
-    return __result;
-END_RCPP
-}
-// C_log_posterior_logit
-double C_log_posterior_logit(NumericVector y, NumericVector lp, double alpha, NumericMatrix Z);
-RcppExport SEXP dynnet_C_log_posterior_logit(SEXP ySEXP, SEXP lpSEXP, SEXP alphaSEXP, SEXP ZSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject __result;
-    Rcpp::RNGScope __rngScope;
-    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type lp(lpSEXP);
-    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
-    __result = Rcpp::wrap(C_log_posterior_logit(y, lp, alpha, Z));
-    return __result;
-END_RCPP
-}
-// C_insert_ref
-NumericMatrix C_insert_ref(IntegerVector ref_idx, NumericMatrix ref_pos, IntegerVector est_idx, NumericMatrix est_pos);
-RcppExport SEXP dynnet_C_insert_ref(SEXP ref_idxSEXP, SEXP ref_posSEXP, SEXP est_idxSEXP, SEXP est_posSEXP) {
+// insert_ref
+NumericMatrix insert_ref(IntegerVector ref_idx, NumericMatrix ref_pos, IntegerVector est_idx, NumericMatrix est_pos);
+RcppExport SEXP dynnet_insert_ref(SEXP ref_idxSEXP, SEXP ref_posSEXP, SEXP est_idxSEXP, SEXP est_posSEXP) {
 BEGIN_RCPP
     Rcpp::RObject __result;
     Rcpp::RNGScope __rngScope;
@@ -144,7 +109,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type ref_pos(ref_posSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type est_idx(est_idxSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type est_pos(est_posSEXP);
-    __result = Rcpp::wrap(C_insert_ref(ref_idx, ref_pos, est_idx, est_pos));
+    __result = Rcpp::wrap(insert_ref(ref_idx, ref_pos, est_idx, est_pos));
     return __result;
 END_RCPP
 }

@@ -2,7 +2,7 @@
 
 using namespace Rcpp;
 
-inline double C_euclidean(NumericVector x, NumericVector y)
+inline double euclidean(NumericVector x, NumericVector y)
 {
   double d = 0.0;
 
@@ -14,7 +14,7 @@ inline double C_euclidean(NumericVector x, NumericVector y)
 }
 
 // [[Rcpp::export(.C_dist_euclidean)]]
-NumericVector C_dist_euclidean(NumericMatrix X)
+NumericVector dist_euclidean(NumericMatrix X)
 {
   int nrow = X.nrow();
 
@@ -23,7 +23,7 @@ NumericVector C_dist_euclidean(NumericMatrix X)
 
   for (int j=0; j < (nrow-1); ++j) {
     for (int i=(j+1); i < nrow; ++i) {
-      d[idx] = C_euclidean(X(j,_), X(i,_));
+      d[idx] = euclidean(X(j,_), X(i,_));
       idx++;
     }
   }

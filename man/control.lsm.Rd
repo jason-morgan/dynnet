@@ -4,18 +4,17 @@
 \alias{control.lsm}
 \title{Latent Space Model Control Parameters}
 \usage{
-control.lsm(MCMC.samplesize = 2^10, MCMC.interval = 100,
-  MCMC.burnin = MCMC.samplesize * 100)
+control.lsm(MCMC.burnin = 2^10, MCMC.interval = 100,
+  MCMC.samplesize = 2^10)
 }
 \arguments{
-\item{MCMC.samplesize}{Integer. Number of samples from the posterior to be
-saved. Defaults to 1024.}
+\item{MCMC.burnin}{Integer. Burn-in for MCMC sampler. Defaults to 1024.}
 
 \item{MCMC.interval}{Integer. Number of steps to be taken between saving
 samples. Defaults to 100.}
 
-\item{MCMC.burnin}{Integer. Burn-in for MCMC sampler. Defaults to 100 times
-the sample size.}
+\item{MCMC.samplesize}{Integer. Number of samples from the posterior to be
+saved. Defaults to 1024.}
 }
 \value{
 List of control parameters.

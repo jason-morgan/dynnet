@@ -8,17 +8,6 @@ using namespace arma;
 using namespace Rcpp;
 
 // structs
-struct LSMModel
-{
-    NumericVector y;
-    NumericMatrix X;		/* model matrix */
-    NumericVector Z_idx;	/* indices for Z to be est */
-    int k;			/* number of dimensions */
-    int burnin;
-    int samplesize;
-    int interval;
-};
-
 struct LSMState
 {
     double alpha;
@@ -30,27 +19,41 @@ struct LSMState
     int Z_accept;
 };
 
+struct LSMModel
+{
+    NumericVector y;
+    NumericMatrix X;		/* model matrix */
+    NumericVector Z_idx;	/* indices for Z to be est */
+    int k;			/* number of dimensions */
+    int burnin;
+    int samplesize;
+    int interval;
+    double (*lsm_posterior_fn)(LSMModel*, LSMState*);
+};
+
 // likelihoods
-double C_llik_logit(NumericVector y, NumericVector lp);
-double C_llik_poisson(NumericVector y, NumericVector lp);
+double llik_logit(LSMModel *Model, NumericVector lp);
+double llik_poisson(LSMModel *Model, NumericVector lp);
 
 // posteriors
-double C_lsm_posterior(LSMModel *Model, LSMState *State);
-double C_log_posterior_logit(NumericVector y, NumericVector lp,
-			     double alpha, NumericMatrix Z);
+double log_posterior_logit(LSMModel *Model, LSMState *State);
+
+// priors
+double log_prior_alpha(LSMModel *Model, LSMState *State);
+double log_prior_Z(LSMModel *Model, LSMState *State);
 
 // distributions
-arma::vec C_dmvnorm(arma::mat x,
-		    arma::rowvec mean,
-		    arma::mat sigma,
-		    bool logd = false);
+arma::vec dmvnorm(arma::mat x,
+		  arma::rowvec mean,
+		  arma::mat sigma,
+		  bool logd = false);
 
 // distances
-NumericVector C_dist_euclidean(NumericMatrix X);
+NumericVector dist_euclidean(NumericMatrix X);
 
 // MH
-void C_lsm_update_Z(LSMModel *Model, LSMState *State);
-void C_lsm_update_alpha(LSMModel *Model, LSMState *State);
+void lsm_update_Z(LSMModel *Model, LSMState *State);
+void lsm_update_alpha(LSMModel *Model, LSMState *State);
 void save_sample(LSMState *State, NumericMatrix *samples, int s);
 
 #endif
