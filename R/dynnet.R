@@ -221,3 +221,19 @@ edge_density.dynnet <- function(network)
 {
     gapply(network, igraph::edge_density)
 }
+
+
+procrustes <- function(Z, Zstar)
+{
+    k <- ncol(Z)
+    Z <- scale(Z, center=TRUE, scale=FALSE)
+    Ztran <- colMeans(Zstar)
+    for (i in 1:k)
+        Z[,i] <- Z[,i] + Ztran[i]
+
+    A <- t(Z) %*% (Zstar %*% t(Zstar)) %*% Z
+    E <- eigen(A, symmetric=TRUE)
+    H <- E$vec %*% diag(sqrt(E$val)) %*% t(E$vec)
+
+    t(t(Zstar) %*% Z %*% solve(H) %*% t(Z))
+}

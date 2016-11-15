@@ -6,7 +6,8 @@
 ##' @param network \code{dynnet} network object.
 ##' @param k Integer. Number of dimensions for the latent space.
 ##' @param period Integer. Period to select from the network object.
-##' @param ref List. Reference vertex information.
+##' @param ref List. Reference vertex information. If \code{NULL}, then
+##'     reference nodes will not be used for identification.
 ##' @param family String specifying the model family. Only \code{bernoulli} is
 ##'     currently supported.
 ##' @param start Function to use to get the starting values for the latent
@@ -20,13 +21,10 @@
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
                 start=start_random, method="MLE", seed=NULL, verbose=TRUE,
-                control=control.lsm())
+                control=control.lsm)
 {
     if (!is.null(seed))
         set.seed(seed)
-
-    if (is.null(ref))
-        stop("lsm: reference node information not provided")
 
     ## Remove isolates; their distance from all other nodes is infinite
     graph <- get_graph(network, period=period)
@@ -42,7 +40,10 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
     ## Starting values
     pos <- start(graph, ref, k)
     alpha <- 1
-    theta <- c(alpha, as.vector(pos[-ref$idx,]))
+    if (!is.null(ref))
+        theta <- c(alpha, as.vector(pos[-ref$idx,]))
+    else
+        theta <- c(alpha, as.vector(pos))
 
     model <- structure(list(edges=edges, period=1, k=k, ref=ref,
                             family=family, beta_idx=1,
@@ -51,10 +52,10 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
                        class="lsmfit")
 
     if (method == "MLE") {
-        est <- lsm_MLE(theta, model, control=control)
+        est <- lsm_MLE(theta, model, control=control())
     } else if (method == "MH") {
-        theta <- lsm_MLE(theta, model, control=control)$par
-        est   <- lsm_MH(theta, model, control=control)
+        theta <- lsm_MLE(theta, model, control=control())$par
+        est   <- lsm_MH(theta, model, control=control())
 
         ## remove fixed values
         rm_idx <- which(apply(est$samples, 2, var) == 0)
@@ -70,6 +71,7 @@ lsm <- function(network, k=1, period=1, ref=NULL, family="bernoulli",
     model
 }
 
+## Why isn't control being used here?
 lsm_MLE <- function(theta, model, control)
 {
     est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
@@ -89,8 +91,14 @@ insert_ref <- function(pos, ref, k)
 calc_likelihood <- function(theta, model=NULL)
 {
     alpha <- theta[model$beta_idx]
-    pos <- insert_ref(matrix(theta[-model$beta_idx], ncol=model$k),
-                      model$ref, model$k)
+
+    if (!is.null(model$ref)) {
+        pos <- insert_ref(matrix(theta[-model$beta_idx], ncol=model$k),
+                          model$ref, model$k)
+    } else {
+        pos <- matrix(theta[-model$beta_idx], ncol=model$k)
+    }
+
     .C_llik_logit(model$edges, alpha - .C_dist_euclidean(pos))
 }
 
@@ -98,7 +106,10 @@ start_random <- function(graph, ref, k)
 {
     n <- igraph::vcount(graph)
     pos <- matrix(runif(n*k, min=-0.5, max=0.5), ncol=k, nrow=n)
-    pos[ref$idx,] <- ref$pos
+
+    if (!is.null(ref))
+        pos[ref$idx,] <- ref$pos
+
     pos
 }
 
@@ -113,5 +124,5 @@ llik_fn <- function(family)
     switch(family,
            "bernoulli" = llik_logit,
            "poisson"   = llik_poisson,
-           stop("unknown family"))
+           stop("unknown model family"))
 }

@@ -1,6 +1,7 @@
 * Tasks
 
   + [ ] Add procrustes indentification strategy.
+  + [ ] Convert API to use a formula object.
   + [ ] Complete coef() for MH models.
   + [ ] Fix plot() for 1d models.
   + [ ] Add BIC/AIC.
