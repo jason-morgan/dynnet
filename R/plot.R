@@ -23,20 +23,23 @@ plot.dynnet <- function(network, layout=NULL, ...)
 plot.lsmfit <- function(model, ...)
 {
     if (model$method == "MLE") {
-        est <- model$estimate$par[-1]            # need a more general way to track the beta coef idx
-        est <- matrix(est, ncol=model$k)
+        est <- model$estimate$par[-model$beta_idx]
     } else if (model$method == "MH") {
-        ## do stuff
+        est <- model$estimate$samples[,-model$beta_idx]
+        est <- colMeans(est)
     }
+
+    est <- matrix(est, ncol=model$k)
 
     G <- model$graph
 
-    all_pos <- insert_ref(est, model$ref, model$k)
+    if (!is.null(model$ref))
+        all_pos <- insert_ref(est, model$ref, model$k)
+    else
+        all_pos <- est
 
     if (model$k == 1)
         all_pos <- cbind(all_pos, 0)
-
-    Y <- as_adj(G)
 
     plot(G, layout=all_pos, ...)
 }
