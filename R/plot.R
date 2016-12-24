@@ -29,12 +29,12 @@ plot.lsmfit <- function(model, ...)
         est <- colMeans(est)
     }
 
-    est <- matrix(est, ncol=model$k)
+    est <- matrix(est, ncol=model$d)
 
     G <- model$graph
 
     if (!is.null(model$ref))
-        all_pos <- insert_ref(est, model$ref, model$k)
+        all_pos <- insert_ref(est, model$ref, model$d)
     else
         all_pos <- est
 
