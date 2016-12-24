@@ -1,11 +1,16 @@
 * Tasks
 
-  + [ ] Add procrustes indentification strategy.
+  + [ ] Fix plotting for MH LSM models
+    - [ ] Include option to plot (a sample) of points.
+  + [ ] Implement Procrustes transform of posterior draws
+  + [ ] Add ability to change prior means and standard deviations
+  + [ ] Add acceptance ratios to message output and model object
   + [ ] Convert API to use a formula object.
   + [ ] Complete coef() for MH models.
   + [ ] Fix plot() for 1d models.
   + [ ] Add BIC/AIC.
   + [ ] Add warning to summary() that the SEs are not right.
-  + [ ] Add functionality for multiple predictors.
   + [ ] Change MH algorithm to update /each/ vertex Z (random order) on each
-    iteration.
+    iteration. Note: Why?
+  + [ ] Add homophily covariate
+  + [X] Check for factors in absdiff

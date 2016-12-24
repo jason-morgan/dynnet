@@ -4,18 +4,21 @@
 \alias{lsm}
 \title{Static Latent Space Model}
 \usage{
-lsm(network, k = 1, period = 1, ref = NULL, family = "bernoulli",
+lsm(formula, d = 1, period = 1, ref = NULL, family = "bernoulli",
   start = start_random, method = "MLE", seed = NULL, verbose = TRUE,
   control = control.lsm())
 }
 \arguments{
-\item{network}{\code{dynnet} network object.}
+\item{formula}{A \code{\link{formula}} object of the form \code{network ~
+terms}, where \code{code} is a \code{dynnet} network object and
+\code{terms} are network terms to be included in the model.}
 
-\item{k}{Integer. Number of dimensions for the latent space.}
+\item{d}{Integer. Number of dimensions for the latent space.}
 
 \item{period}{Integer. Period to select from the network object.}
 
-\item{ref}{List. Reference vertex information.}
+\item{ref}{List. Reference vertex information. If \code{NULL}, then
+reference nodes will not be used for identification.}
 
 \item{family}{String specifying the model family. Only \code{bernoulli} is
 currently supported.}

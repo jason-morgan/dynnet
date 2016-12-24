@@ -10,11 +10,9 @@ using namespace Rcpp;
 // structs
 struct LSMState
 {
-    double alpha;
     NumericVector beta;
     NumericMatrix Z;
     double posterior;
-    int alpha_accept;
     int beta_accept;
     int Z_accept;
 };
@@ -24,7 +22,8 @@ struct LSMModel
     NumericVector y;
     NumericMatrix X;		/* model matrix */
     NumericVector Z_idx;	/* indices for Z to be est */
-    int k;			/* number of dimensions */
+    int k;			/* number of exogenous covariates */
+    int d;			/* number of dimensions */
     int burnin;
     int samplesize;
     int interval;
@@ -39,7 +38,7 @@ double llik_poisson(LSMModel *Model, NumericVector lp);
 double log_posterior_logit(LSMModel *Model, LSMState *State);
 
 // priors
-double log_prior_alpha(LSMModel *Model, LSMState *State);
+double log_prior_beta(LSMModel *Model, LSMState *State);
 double log_prior_Z(LSMModel *Model, LSMState *State);
 
 // distributions
@@ -53,7 +52,7 @@ NumericVector dist_euclidean(NumericMatrix X);
 
 // MH
 void lsm_update_Z(LSMModel *Model, LSMState *State);
-void lsm_update_alpha(LSMModel *Model, LSMState *State);
+void lsm_update_beta(LSMModel *Model, LSMState *State);
 void save_sample(LSMState *State, NumericMatrix *samples, int s);
 
 #endif
