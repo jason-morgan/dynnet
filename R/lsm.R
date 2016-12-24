@@ -82,7 +82,7 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
             rm_idx <- which(apply(est$samples, 2, var) == 0)
             est$samples <- coda::mcmc(est$samples[,-rm_idx])
             varnames(est$samples) <- c(model$beta_names,
-                                       model$Z_names[,-rm_idx])
+                                       model$Z_names[-rm_idx])
         } else {
             est$samples <- coda::mcmc(est$samples)
             varnames(est$samples) <- c(model$beta_names, model$Z_names)
