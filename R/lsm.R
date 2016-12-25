@@ -62,6 +62,12 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
     else
         Z_names <- paste0("v", 1:nodes, "_d", rep(1:d, each=nodes))
 
+    ## Set node colors
+    graph <- set_vertex_attr(graph, "color", index=1:nodes, "#E85B16")
+    if  (!is.null(ref))
+        graph <- set_vertex_attr(graph, "color", index=ref$idx, "#1C57A5")
+
+
     model <- structure(list(edges=edges, period=1, k=ncol(X), d=d,
                             ref=ref,
                             family=family, X=X,
@@ -85,8 +91,6 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
             varnames(est$samples) <- c(model$beta_names,
                                        model$Z_names[-(rm_idx -
                                                        max(model$beta_idx))])
-            ## est$samples <- coda::mcmc(est$samples)
-            ## varnames(est$samples) <- c(model$beta_names, model$Z_names)
         } else {
             est$samples <- coda::mcmc(est$samples)
             varnames(est$samples) <- c(model$beta_names, model$Z_names)

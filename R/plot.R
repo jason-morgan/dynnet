@@ -43,3 +43,9 @@ plot.lsmfit <- function(model, ...)
 
     plot(G, layout=all_pos, ...)
 }
+
+plot_mcmc <- function(model, ...)
+{
+    if (!is.null(model$estimate$samples))
+        plot(model$estimate$samples, ...)
+}

@@ -18,14 +18,14 @@ get_adjacency <- function(network, period=NULL)
         network[["graphs"]][period][]
 }
 
-get_graph <- function(network, period=NULL)
+get_graph <- function(object, period=NULL)
 {
     if (is.null(period))
-        network[["graphs"]]
+        object[["graphs"]]
     else if (length(period) == 1)
-        network[["graphs"]][[period]]
+        object[["graphs"]][[period]]
     else
-        network[["graphs"]][period]
+        object[["graphs"]][period]
 }
 
 ##' Calculates the number of unique dyads in a network.
