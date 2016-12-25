@@ -15,7 +15,7 @@ coef.lsmfit <- function(object, ...)
             est <- colMeans(object$estimate$samples[, idx])
     }
 
-    names(est) <- "(Intercept)"
+    names(est) <- object$beta_names
     est
 }
 
@@ -36,7 +36,7 @@ summary.lsmfit <- function(object, ...)
         tbl <- data.frame("Posterior Mean"=est, "SD"=se)
     }
 
-    rownames(tbl) <- "(Intercept)"
+    rownames(tbl) <- object$beta_names
     tbl
 }
 

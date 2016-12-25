@@ -79,10 +79,18 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
 
         ## remove fixed values when ref units are used, apply names
         if (!is.null(ref)) {
-            rm_idx <- which(apply(est$samples, 2, var) == 0)
+            rm_idx <- ref$idx + max(model$beta_idx)
+            rm_idx <- rm_idx + rep(0:(d-1), each=length(ref$idx)) * nodes
+
             est$samples <- coda::mcmc(est$samples[,-rm_idx])
+
+            print(head(est$samples))
+
             varnames(est$samples) <- c(model$beta_names,
-                                       model$Z_names[-rm_idx])
+                                       model$Z_names[-(rm_idx -
+                                                       max(model$beta_idx))])
+            ## est$samples <- coda::mcmc(est$samples)
+            ## varnames(est$samples) <- c(model$beta_names, model$Z_names)
         } else {
             est$samples <- coda::mcmc(est$samples)
             varnames(est$samples) <- c(model$beta_names, model$Z_names)

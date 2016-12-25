@@ -90,15 +90,15 @@ list_all_equal <- function(lst)
     length(unique(lst)) == 1
 }
 
-##' Select a random point from a k-dimensional unit hypersphere.
+##' Select a random point from a d-dimensional unit hypersphere.
 ##'
-##' Select a random point from a k-dimensional unit hypersphere.
-##' @title Random Point From \code{k}-dimensional Unit Hypersphere
-##' @param k Positive integer indicating the dimensions of the hypersphere.
+##' Select a random point from a d-dimensional unit hypersphere.
+##' @title Random Point From \code{d}-dimensional Unit Hypersphere
+##' @param d Positive integer indicating the dimensions of the hypersphere.
 ##' @return Numeric vector of coordinates.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-rksphere <- function(k)
+rdsphere <- function(d)
 {
-    x <- rnorm(k)
+    x <- rnorm(d)
     (1 / sqrt(x %*% x)) * x
 }
