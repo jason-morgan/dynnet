@@ -7,16 +7,6 @@
 using namespace Rcpp;
 using namespace arma;
 
-// LSMState copy_lsm_state(LSMState *State)
-// {
-//   LSMState x = { State->beta,
-// 		 State->Z,
-// 		 State->posterior,
-// 		 State->beta_accept,
-// 		 State->Z_accept };
-//   return x;
-// }
-
 // [[Rcpp::export(.C_lsm_MH)]]
 List C_lsm_MH(NumericVector y,
 	      NumericMatrix X,	// model matrix
@@ -46,14 +36,7 @@ List C_lsm_MH(NumericVector y,
   for (int i=0; i < Model.burnin; ++i) {
     if (i % (Model.burnin / 10) == 0) {
       Rcpp::checkUserInterrupt();
-      Rcpp::Rcout << "iter => "
-		  << i << " (" << (i * 100) / Model.burnin << "%)  "
-		  << "( beta accept: "
-		  << (double(State.beta_accept) / double(i)) * 100
-		  << "%  Z accept: "
-		  << (double(State.Z_accept) / double(i)) * 100
-		  << "% )"
-		  << std::endl;
+      msg_mcmc_iter(i, Model.burnin, State.beta_accept, State.Z_accept);
     }
 
     lsm_update_Z(&Model, &State);
@@ -64,13 +47,14 @@ List C_lsm_MH(NumericVector y,
   Rcpp::Rcout << std::endl << "=========="
 	      << std::endl << " Sampling"
 	      << std::endl << "==========" << std::endl;
+
+  State.beta_accept = 0;
+  State.Z_accept = 0;
   for (int s=0; s < Model.samplesize; ++s) {
     if (s % (Model.samplesize / 10) == 0) {
       Rcpp::checkUserInterrupt();
-      Rcpp::Rcout << "iter => "
-                  << double(s) / double(Model.samplesize) * 100
-		  << " %"
-		  << std::endl;
+      msg_mcmc_iter(s*Model.interval, Model.samplesize*Model.interval,
+		    State.beta_accept, State.Z_accept);
     }
 
     for (int i=0; i < Model.interval; ++i) {

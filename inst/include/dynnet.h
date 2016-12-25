@@ -55,4 +55,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State);
 void lsm_update_beta(LSMModel *Model, LSMState *State);
 void save_sample(LSMState *State, NumericMatrix *samples, int s);
 
+// message wrappers
+void msg_mcmc_iter(int iter, int total, int beta_accept, int Z_accept);
+
 #endif
