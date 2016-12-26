@@ -1,16 +1,19 @@
 * Tasks
+** New features
 
-  + [ ] Fix plotting for MH LSM models
-    - [ ] Include option to plot (a sample) of points.
-  + [ ] Implement Procrustes transform of posterior draws
-  + [ ] Add ability to change prior means and standard deviations
-  + [ ] Add acceptance ratios to message output and model object
-  + [ ] Convert API to use a formula object.
-  + [ ] Complete coef() for MH models.
-  + [ ] Fix plot() for 1d models.
-  + [ ] Add BIC/AIC.
-  + [ ] Add warning to summary() that the SEs are not right.
-  + [ ] Change MH algorithm to update /each/ vertex Z (random order) on each
-    iteration. Note: Why?
-  + [ ] Add homophily covariate
-  + [X] Check for factors in absdiff
+   + [ ] Improve summary()
+   + [ ] Implement predict()
+   + [ ] Include option to plot (a sample) of points
+   + [ ] Implement Projection Model (HRH; 2002)
+   + [ ] Add homophily covariate
+
+** Algorithm changes
+
+   + [ ] Add adaptive proposals
+   + [ ] Add ability to change prior means and standard deviations
+   + [ ] Change MH algorithm to update /each/ vertex Z (random order) on each
+     iteration. Note: Why?
+
+** Bugs
+
+   + [ ] Add warning to summary() that the SEs are not right.
