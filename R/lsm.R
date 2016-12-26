@@ -137,8 +137,8 @@ build_model_data <- function(ft, graph)
 ## TODO: control should be used here
 lsm_MLE <- function(theta, model, control)
 {
-    lwr <- c(rep(-Inf, ncol(model$X)), rep(-20, length(theta)-ncol(model$X)))
-    upr <- c(rep(Inf, ncol(model$X)), rep(20, length(theta)-ncol(model$X)))
+    lwr <- c(rep(-Inf, ncol(model$X)), rep(-10, length(theta)-ncol(model$X)))
+    upr <- c(rep(Inf, ncol(model$X)), rep(10, length(theta)-ncol(model$X)))
     est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
                  lower=lwr, upper=upr,
                  control=list(trace=model$verbose, fnscale=-1, maxit=500),
@@ -171,7 +171,6 @@ lsm_MH <- function(theta, model, control=control.lsm(MCMC.burnin=2^10,
 insert_ref <- function(pos, ref, d)
 {
     n <- nrow(pos) + length(ref$idx)
-
     .C_insert_ref(ref$idx, ref$pos, (1:n)[-ref$idx], pos)
 }
 
@@ -190,8 +189,7 @@ calc_likelihood <- function(theta, model=NULL)
     }
 
     D <- Xbeta - .C_dist_euclidean(pos)
-    lik <- .C_llik_logit(model$edges, D)
-    lik
+    .C_llik_logit(model$edges, D)
 }
 
 start_random <- function(graph, ref, d)
