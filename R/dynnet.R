@@ -1,6 +1,16 @@
 ##' @useDynLib dynnet
 NULL
 
+##' Latent Space Models for Static and Dynamic Networks
+##'
+##' \pkg{dynnet} will provide a set of latent space models for static and
+##' dynamic networks. Currently, the package provides the original Euclidean
+##' model of Hoff, Raftery, & Handcock (HRH; 2002) along with a variation of the
+##' model that uses reference nodes as a method of parameter
+##' identification. Extensions to the Projection Model and dynamic networks is
+##' planned for the near future.
+"_DYNNET"
+
 ##' Generate a dynamic network object from a list of adjacency matrices.
 ##'
 ##' Generate a dynamic network object from a list of adjacency matrices.
