@@ -20,26 +20,31 @@ plot.dynnet <- function(network, layout=NULL, ...)
         plot(g[[i]], ...)
 }
 
-plot.lsmfit <- function(model, ...)
+plot.lsmfit <- function(model, transform="procrustes", ...)
 {
     if (model$method == "MLE") {
         est <- model$estimate$par[-model$beta_idx]
     } else if (model$method == "MH") {
-        est <- model$estimate$samples[,-model$beta_idx]
-        est <- colMeans(est)
+        if (transform == "procrustes" && is.null(model$ref)) {
+            est <- colMeans(model$estimate$transformed)
+        } else {
+            est <- model$estimate$samples[,-model$beta_idx]
+            est <- colMeans(est)
+        }
     }
 
     est <- matrix(est, ncol=model$d)
 
     G <- model$graph
 
-    if (!is.null(model$ref))
+    if (!is.null(model$ref)) {
         all_pos <- insert_ref(est, model$ref, model$d)
-    else
+    } else {
         all_pos <- est
+    }
 
     if (model$k == 1)
-        all_pos <- cbind(all_pos, 0)
+        all_pos <- cbind(all_pos, mean(all_pos))
 
     plot(G, layout=all_pos, ...)
 }

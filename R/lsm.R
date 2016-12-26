@@ -94,6 +94,10 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
         } else {
             est$samples <- coda::mcmc(est$samples)
             varnames(est$samples) <- c(model$beta_names, model$Z_names)
+            Zstar <- matrix(theta[-model$beta_idx], ncol=model$d)
+            est$transformed <-
+                transform_procrustes(Zstar, est$samples[,-model$beta_idx],
+                                     model$d)
         }
     } else {
         est <- NULL
@@ -228,4 +232,12 @@ procrustes <- function(Z, Zstar)
     H <- E$vec %*% diag(sqrt(E$val)) %*% t(E$vec)
 
     t(t(Zstar) %*% Z %*% solve(H) %*% t(Z))
+}
+
+transform_procrustes <- function(Zstar, samples, d)
+{
+    x <- lapply(1:nrow(samples),
+                function(r) procrustes(Zstar, matrix(samples[r,], ncol=d)))
+    x <- lapply(x, as.vector)
+    coda::mcmc(do.call(rbind, x))
 }
