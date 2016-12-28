@@ -165,6 +165,10 @@ lsm_MLE <- function(theta, model, control)
                  control=list(trace=model$verbose, fnscale=-1, maxit=500),
                  hessian=TRUE)
 
+    ## center the latent locations
+    Z <- scale(matrix(est$par[-model$beta_idx], ncol=model$d), scale=FALSE)
+    est$par <- c(est$par[model$beta_idx], as.vector(Z))
+
     est
 }
 
