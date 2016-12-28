@@ -71,3 +71,41 @@ logLik.lsmfit <- function(object, ...)
 
     llik
 }
+
+##' Extract the estimated latent locations for a latent space model.
+##'
+##' This function returns the estimated latent locations for a latent space
+##' model.
+##' @title Estimated Locations from Latent Space Model
+##' @param object A \code{\link{lsmfit}} object.
+##' @param ... Addition parameters to pass.
+##' @return A matrix of estimated locations. For a model fit via MLE, this is
+##'     the MLE estimates. For models with with the Metropolis-Hastings
+##'     algorithm, the posterior means for the locations (possibly transformed
+##'     via a Procrustes step, if that was the method of identification
+##'     specified.)
+##' @author Jason Morgan
+locations <- function(object, ...)
+{
+    UseMethod("locations")
+}
+
+##' @export
+##' @rdname locations
+locations.lsmfit <- function(object, transform="procrustes", ...)
+{
+    if (object$method == "MLE") {
+        est <- object$estimate$par[-object$beta_idx]
+    } else if (object$method == "MH") {
+        if (transform == "procrustes" && is.null(object$ref)) {
+            est <- colMeans(object$estimate$transformed)
+        } else {
+            est <- object$estimate$samples[,-object$beta_idx]
+            est <- colMeans(est)
+        }
+    }
+
+    est <- matrix(est, ncol=object$d)
+    rownames(est) <- vertex_attr(object$graph, "name")
+    est
+}

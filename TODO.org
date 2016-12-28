@@ -6,6 +6,7 @@
    + [ ] Include option to plot (a sample) of points
    + [ ] Implement Projection Model (HRH; 2002)
    + [ ] Add homophily covariate
+   + [ ] Add support for directed LSMs.
 
 ** Algorithm changes
 

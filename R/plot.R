@@ -43,19 +43,7 @@ plot.dynnet <- function(network, layout=NULL, ...)
 
 plot.lsmfit <- function(model, transform="procrustes", ...)
 {
-    if (model$method == "MLE") {
-        est <- model$estimate$par[-model$beta_idx]
-    } else if (model$method == "MH") {
-        if (transform == "procrustes" && is.null(model$ref)) {
-            est <- colMeans(model$estimate$transformed)
-        } else {
-            est <- model$estimate$samples[,-model$beta_idx]
-            est <- colMeans(est)
-        }
-    }
-
-    est <- matrix(est, ncol=model$d)
-
+    est <- locations(model, transform=transform)
     G <- model$graph
 
     if (!is.null(model$ref)) {

@@ -3,6 +3,7 @@
 S3method(edge_density,dynnet)
 S3method(gapply,dynnet)
 S3method(graphs,dynnet)
+S3method(locations,lsmfit)
 S3method(nodes,dynnet)
 S3method(periods,dynnet)
 S3method(print,dynnet)
