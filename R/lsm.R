@@ -260,7 +260,7 @@ procrustes <- function(Z, Zstar)
 transform_procrustes <- function(Zstar, samples, d)
 {
     x <- lapply(1:nrow(samples),
-                function(r) procrustes(Zstar, matrix(samples[r,], ncol=d)))
+                function(r) procrustes(matrix(samples[r,], ncol=d), Zstar))
     x <- lapply(x, as.vector)
     coda::mcmc(do.call(rbind, x))
 }
