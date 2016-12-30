@@ -21,4 +21,5 @@ Checks whether all elements of the supplied list are equal.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
+\keyword{internal}
 

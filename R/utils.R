@@ -60,11 +60,42 @@ calc_positions <- function(periods, pos, traj, fn=trajectory_linear, ...)
 ##' @param lst List.
 ##' @return Logical indicating whether or not all values of the list are equal.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @keywords internal
 list_all_equal <- function(lst)
 {
     length(unique(lst)) == 1
 }
 
+##' Decompose estimated theta vector into its beta and Z components.
+##'
+##' This function is meant as the go-to for decomposing theta (such as a single
+##' sample from the posterior or the vector of estimates from optim). The list
+##' returned includes a vector containing the coefficients on the exogenous
+##' covariates and a positions matrix, Z.
+##' @title Decompose \code{theta} into the
+##' @param theta Vector to decompose.
+##' @param beta_idx Integer vector indicating the
+##' @param d Dimensions of the latent space.
+##' @return List of beta, Z
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @keywords internal
+decompose_theta <- function(theta, beta_idx, d)
+{
+    list(beta=theta[beta_idx],
+         Z=matrix(theta[-beta_idx], ncol=d))
+}
+
+##' Insert the reference vertex locations into the latent positions matrix.
+##'
+##' This calls an underlying \code{C} function, \code{.C_insert_ref}, since it's
+##' critical to the speed of the MLE implementation.
+##' @title Insert Reference Locations into Latent Positions Matrix
+##' @param pos \code{n-r} by \code{d} positions matrix, where r is the number of
+##' @param ref Reference object as specified in an latent space model
+##' @param d Dimensions of the latent space
+##' @return Latent positions matrix with reference locations inserted.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @keywords internal
 insert_ref <- function(pos, ref, d)
 {
     n <- nrow(pos) + length(ref$idx)

@@ -195,20 +195,19 @@ lsm_MH <- function(theta, model, control=control.lsm(MCMC.burnin=2^10,
 
 calc_likelihood <- function(theta, model=NULL)
 {
-    beta <- theta[model$beta_idx]
+    T <- decompose_theta(theta, model$beta_idx, model$d)
     X <- model$X
 
-    Xbeta <- X %*% matrix(beta, ncol=1)
+    Xbeta <- X %*% matrix(T$beta, ncol=1)
 
     if (!is.null(model$ref)) {
-        pos <- insert_ref(matrix(theta[-model$beta_idx], ncol=model$d),
-                          model$ref, model$d)
+        Z <- insert_ref(T$Z, model$ref, model$d)
     } else {
-        pos <- matrix(theta[-model$beta_idx], ncol=model$d)
+        Z <- T$Z
     }
 
-    D <- Xbeta - .C_dist_euclidean(pos)
-    .C_llik_logit(model$edges, D)
+    lp <- Xbeta - .C_dist_euclidean(Z)
+    .C_llik_logit(model$edges, lp)
 }
 
 start_random <- function(graph, ref, d)
