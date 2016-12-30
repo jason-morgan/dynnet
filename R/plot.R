@@ -45,17 +45,7 @@ plot.lsmfit <- function(model, transform="procrustes", ...)
 {
     est <- locations(model, transform=transform)
     G <- model$graph
-
-    if (!is.null(model$ref)) {
-        all_pos <- insert_ref(est, model$ref, model$d)
-    } else {
-        all_pos <- est
-    }
-
-    if (model$k == 1)
-        all_pos <- cbind(all_pos, mean(all_pos))
-
-    plot(G, layout=all_pos, ...)
+    plot(G, layout=est, ...)
 }
 
 plot_mcmc <- function(model, ...)

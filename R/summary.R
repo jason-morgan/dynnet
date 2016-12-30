@@ -106,6 +106,13 @@ locations.lsmfit <- function(object, transform="procrustes", ...)
     }
 
     est <- matrix(est, ncol=object$d)
+
+    if (!is.null(object$ref))
+        est <- insert_ref(est, object$ref, object$d)
+
+    if (object$d == 1)
+        est <- cbind(est, mean(all_pos))
+
     rownames(est) <- vertex_attr(object$graph, "name")
     est
 }

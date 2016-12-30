@@ -42,8 +42,9 @@ List C_lsm_MH(NumericVector y,
 	      String family)
 {
   LSMModel Model = {y, X, Z_idx, k, d, burnin, samplesize, interval};
-  if (family == "bernoulli")
+  if (family == "bernoulli") {
     Model.lsm_posterior_fn = log_posterior_logit;
+  }
 
   LSMState State = {beta, Z, 0.0, 0, 0};
   NumericMatrix samples(Model.samplesize,
@@ -55,7 +56,10 @@ List C_lsm_MH(NumericVector y,
 	      << std::endl << "  Burnin"
 	      << std::endl << "==========" << std::endl;
   for (int i=0; i < Model.burnin; ++i) {
-    if (i % (Model.burnin / 10) == 0) {
+    // The first check here is just to prevent a floating point exception when
+    // the burnin is very small. This is a hack and should be fixed in a more
+    // elegant way.
+    if ((Model.burnin > 1000) && (i % (Model.burnin / 10) == 0)) {
       Rcpp::checkUserInterrupt();
       msg_mcmc_iter(i, Model.burnin, State.beta_accept, State.Z_accept);
     }
@@ -72,7 +76,9 @@ List C_lsm_MH(NumericVector y,
   State.beta_accept = 0;
   State.Z_accept = 0;
   for (int s=0; s < Model.samplesize; ++s) {
-    if (s % (Model.samplesize / 10) == 0) {
+    // As above, this first check here is just to prevent a floating point
+    // exception when the samplesize is very small.
+    if ((Model.samplesize > 1000) && (s % (Model.samplesize / 10) == 0)) {
       Rcpp::checkUserInterrupt();
       msg_mcmc_iter(s*Model.interval, Model.samplesize*Model.interval,
 		    State.beta_accept, State.Z_accept);
@@ -150,7 +156,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 
   for (int i=0; i < idx.size(); ++i) {
     (State->Z)(idx[i], _) = (State->Z)(idx[i], _)
-      + rnorm(C, 0.0, 2.0/idx.size());
+      + rnorm(C, 0.0, 4.0/idx.size());
   }
 
   double new_posterior = (Model->lsm_posterior_fn)(Model, State);
@@ -211,7 +217,7 @@ double log_prior_Z(LSMModel *Model, LSMState *State)
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
-  sigma.fill_diag(2.0);
+  sigma.fill_diag(4.0);
 
   return(sum(dmvnorm(as<arma::mat>(State->Z),
 		     as<arma::rowvec>(mu),
