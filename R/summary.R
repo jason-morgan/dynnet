@@ -116,3 +116,33 @@ locations.lsmfit <- function(object, transform="procrustes", ...)
     rownames(est) <- vertex_attr(object$graph, "name")
     est
 }
+
+## Linear predictor for a single MCMC sample
+mcmc_sample_lp <- function(sample, object)
+{
+    D <- as.vector(dist(matrix(sample[-object$beta_idx], ncol=object$d)))
+    object$X %*% matrix(coef(object), ncol=1) - D
+}
+
+predict.lsmfit <- function(object, type="link", ...)
+{
+    if (object$method == "MLE") {
+        D <- as.vector(dist(locations(object)))
+        pred <- object$X %*% matrix(coef(object), ncol=1) - D
+    } else if (object$method == "MH") {
+        pred <- apply(object$estimate$samples, 1,
+                      function(s) mcmc_sample_lp(s, object))
+    } else {
+        stop("unknown estimation method")
+    }
+
+    if (type == "response") {
+        if (object$family == "bernoulli") {
+            pred <- plogis(pred)
+        } else {
+            stop("unsupported family")
+        }
+    }
+
+    pred
+}
