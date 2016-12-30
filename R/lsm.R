@@ -63,7 +63,7 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
                 immediate.=TRUE)
 
     ## Build model matrix and extract edge values
-    dta <- build_model_data(ft, graph)
+    dta <- build_model_matrix(ft, graph)
     edges <- dta$edges
     X <- dta$x
 
@@ -131,7 +131,7 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
     model
 }
 
-build_model_data <- function(ft, graph)
+build_model_matrix <- function(ft, graph)
 {
     vars <- all.vars(ft)
     spec <- attr(ft, "specials")
@@ -191,12 +191,6 @@ lsm_MH <- function(theta, model, control=control.lsm(MCMC.burnin=2^10,
               control$MCMC.burnin, control$MCMC.samplesize,
               control$MCMC.interval, beta, Z,
               model$family)
-}
-
-insert_ref <- function(pos, ref, d)
-{
-    n <- nrow(pos) + length(ref$idx)
-    .C_insert_ref(ref$idx, ref$pos, (1:n)[-ref$idx], pos)
 }
 
 calc_likelihood <- function(theta, model=NULL)

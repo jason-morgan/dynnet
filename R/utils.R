@@ -19,52 +19,6 @@
 ## ----------------------------------------------------------------------------
 
 
-##' Extract adjacency matrices from dynnet object.
-##'
-##' Extract adjacency matrices from dynnet object.
-##' @title Extract Adjacency Matrices from dynnet Object
-##' @param net dynnet network.
-##' @param period Numeric vector.
-##' @return List of adjacency matrices, unless a single \code{period} is
-##' specified, then a matrix is returned.
-##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-##' @export
-get_adjacency <- function(network, period=NULL)
-{
-    if (is.null(period))
-        lapply(network[["graphs"]][], `[`)
-    else if (length(period) == 1)
-        network[["graphs"]][[period]][]
-    else
-        network[["graphs"]][period][]
-}
-
-get_graph <- function(object, period=NULL)
-{
-    if (is.null(period))
-        object[["graphs"]]
-    else if (length(period) == 1)
-        object[["graphs"]][[period]]
-    else
-        object[["graphs"]][period]
-}
-
-##' Calculates the number of unique dyads in a network.
-##'
-##' Calculates the number of unique dyads in a network.
-##' @title Calculate the Number of Unique Dyads in a Network
-##' @param network A \code{dynnet} network.
-##' @return The number of unique dyads in a network.
-##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-ndyads.dynnet <- function(network)
-{
-    n <- network$nodes * (network$nodes - 1)
-    if (!isTRUE(network$directed))
-        n <- n / 2
-
-    n
-}
-
 ##' Converts a matrix of latent locations to a vector of pairwise distances.
 ##'
 ##' Converts a matrix of latent locations for each of the \code{n} nodes to a
@@ -111,15 +65,8 @@ list_all_equal <- function(lst)
     length(unique(lst)) == 1
 }
 
-##' Select a random point from a d-dimensional unit hypersphere.
-##'
-##' Select a random point from a d-dimensional unit hypersphere.
-##' @title Random Point From \code{d}-dimensional Unit Hypersphere
-##' @param d Positive integer indicating the dimensions of the hypersphere.
-##' @return Numeric vector of coordinates.
-##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-rdsphere <- function(d)
+insert_ref <- function(pos, ref, d)
 {
-    x <- rnorm(d)
-    (1 / sqrt(x %*% x)) * x
+    n <- nrow(pos) + length(ref$idx)
+    .C_insert_ref(ref$idx, ref$pos, (1:n)[-ref$idx], pos)
 }

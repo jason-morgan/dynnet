@@ -186,28 +186,18 @@ print.dynnet <- function(network)
     cat("  |- Nodes:  ",   nodes(network), "\n")
 }
 
-##' Apply function to each network realization. Currently a wrapper around lapply.
+##' Concatenate dynnet objects into a single composite network.
 ##'
-##' Apply function to each network realization.
-##' @title Apply Function To Each Network Realization
-##' @param network dynnet network object.
-##' @param fn Function taking an igraph object.
-##' @return List of results of applying fn to each realization of the network.
+##' Currently, no checking is done to verify the homogeneity of the networks
+##' with respect to the number of vertices, directionality, type of ties,
+##' etc. User beware.
+##' @title Concatenate dynnet Objects into Single Composite Network
+##' @param ... dynnet objects to be concatenated.
+##' @param recursive Logical. If recursive = TRUE, recursively descend through
+##'     lists of dynnet objects, combining all their elements into a single
+##'     dynnet object.
+##' @return dynnet object.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-##' @export
-gapply <- function(network, fn)
-{
-    UseMethod("gapply")
-}
-
-##' @export
-##' @rdname gapply
-gapply.dynnet <- function(network, fn)
-{
-    fn <- match.fun(fn)
-    lapply(graphs(network), fn)
-}
-
 c.dynnet <- function(..., recursive=FALSE)
 {
     nets <- list(...)
@@ -238,4 +228,63 @@ edge_density <- function(network)
 edge_density.dynnet <- function(network)
 {
     gapply(network, igraph::edge_density)
+}
+
+##' Extract adjacency matrices from dynnet object.
+##'
+##' Extract adjacency matrices from dynnet object.
+##' @title Extract Adjacency Matrices from dynnet Object
+##' @param net dynnet network.
+##' @param period Numeric vector.
+##' @return List of adjacency matrices, unless a single \code{period} is
+##' specified, then a matrix is returned.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @export
+get_adjacency <- function(network, period=NULL)
+{
+    if (is.null(period))
+        lapply(network[["graphs"]][], `[`)
+    else if (length(period) == 1)
+        network[["graphs"]][[period]][]
+    else
+        network[["graphs"]][period][]
+}
+
+##' Returns an \code{\link{igraph}} graph or list of graphs composing the
+##' dynamic network.
+##'
+##' If \code{period} is \code{NULL}, a list of all graphs in the specified
+##' object is returned. If an integer is provided, then the graph associated
+##' with that period is returned. Supplying a vector of integers will return a
+##' list of the specified graphs.
+##' @title Select Graph from a \code{dynnet} Object
+##' @param object \code{\link{dynnet}} object
+##' @param period Integer, numeric, or \code{NULL} indicating which graph to or
+##'     set of graphs to return. See Details.
+##' @return An \code{\link{igraph}} graph or the list of graphs.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+get_graph <- function(object, period=NULL)
+{
+    if (is.null(period))
+        object[["graphs"]]
+    else if (length(period) == 1)
+        object[["graphs"]][[period]]
+    else
+        object[["graphs"]][period]
+}
+
+##' Calculates the number of unique dyads in a network.
+##'
+##' Calculates the number of unique dyads in a network.
+##' @title Calculate the Number of Unique Dyads in a Network
+##' @param network A \code{dynnet} network.
+##' @return The number of unique dyads in a network.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+ndyads.dynnet <- function(network)
+{
+    n <- network$nodes * (network$nodes - 1)
+    if (!isTRUE(network$directed))
+        n <- n / 2
+
+    n
 }

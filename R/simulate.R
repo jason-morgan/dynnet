@@ -216,3 +216,16 @@ positions <- function(sim) { sim$DGP$positions }
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 ##' @export
 trajectories <- function(sim) { sim$DGP$trajectories }
+
+##' Select a random point from a d-dimensional unit hypersphere.
+##'
+##' Select a random point from a d-dimensional unit hypersphere.
+##' @title Random Point From \code{d}-dimensional Unit Hypersphere
+##' @param d Positive integer indicating the dimensions of the hypersphere.
+##' @return Numeric vector of coordinates.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+rdsphere <- function(d)
+{
+    x <- rnorm(d)
+    (1 / sqrt(x %*% x)) * x
+}

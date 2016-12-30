@@ -18,6 +18,27 @@
 ##
 ## ----------------------------------------------------------------------------
 
+##' Apply function to each network realization. Currently a wrapper around lapply.
+##'
+##' Apply function to each network realization.
+##' @title Apply Function To Each Network Realization
+##' @param network dynnet network object.
+##' @param fn Function taking an igraph object.
+##' @return List of results of applying fn to each realization of the network.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @export
+gapply <- function(network, fn)
+{
+    UseMethod("gapply")
+}
+
+##' @export
+##' @rdname gapply
+gapply.dynnet <- function(network, fn)
+{
+    fn <- match.fun(fn)
+    lapply(graphs(network), fn)
+}
 
 dmap <- function(n, fn, ...)
 {
