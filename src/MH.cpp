@@ -46,12 +46,14 @@ List C_lsm_MH(NumericVector y,
     Model.lsm_posterior_fn = log_posterior_logit;
   }
 
-  LSMState State = {beta, Z, 0.0, 0, 0};
+  LSMState State = {beta, Z, 0.0, 0, 0, 1.0};
   NumericMatrix samples(Model.samplesize,
 			Model.k + ((State.Z).nrow() * (State.Z).ncol()));
   State.posterior = Model.lsm_posterior_fn(&Model, &State);
 
   // burnin
+  int Z_accept_last = 0;	// records the last Z acceptance
+  int niter = 2000;
   Rcpp::Rcout << std::endl << "=========="
 	      << std::endl << "  Burnin"
 	      << std::endl << "==========" << std::endl;
@@ -62,6 +64,12 @@ List C_lsm_MH(NumericVector y,
     if ((Model.burnin > 1000) && (i % (Model.burnin / 10) == 0)) {
       Rcpp::checkUserInterrupt();
       msg_mcmc_iter(i, Model.burnin, State.beta_accept, State.Z_accept);
+    }
+
+    // Adjust Z proposal SD
+    if ((Model.burnin > niter) && (i % niter == 0)) {
+      adapt_Z_proposal_sd(&State, niter, Z_accept_last);
+      Z_accept_last = State.Z_accept;
     }
 
     lsm_update_Z(&Model, &State);
@@ -153,13 +161,12 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
   int R = (State->Z).nrow();
   int C = (State->Z).ncol();
   NumericVector idx = Model->Z_idx - 1;	// R indices start at 1
-
   NumericMatrix orig_Z = clone(State->Z);
 
   NumericVector mu(C);
   NumericMatrix sigma(C);
   mu.fill(0.0);
-  sigma.fill_diag(0.5 / C);
+  sigma.fill_diag(State->Z_proposal_sd);
 
   arma::mat delta = rmvnorm(R, as<arma::vec>(mu), as<arma::mat>(sigma));
   State->Z = wrap(as<arma::mat>(State->Z) + delta);
@@ -222,7 +229,7 @@ double log_prior_Z(LSMModel *Model, LSMState *State)
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
-  sigma.fill_diag(5.0);
+  sigma.fill_diag(10.0);
 
   return(sum(dmvnorm(as<arma::mat>(State->Z),
 		     as<arma::rowvec>(mu),

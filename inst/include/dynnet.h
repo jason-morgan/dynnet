@@ -15,6 +15,7 @@ struct LSMState
     double posterior;
     int beta_accept;
     int Z_accept;
+    double Z_proposal_sd;
 };
 
 struct LSMModel
@@ -58,6 +59,9 @@ NumericVector dist_euclidean(NumericMatrix X);
 void lsm_update_Z(LSMModel *Model, LSMState *State);
 void lsm_update_beta(LSMModel *Model, LSMState *State);
 void save_sample(LSMState *State, NumericMatrix *samples, int s);
+
+// Adaptive proposals
+void adapt_Z_proposal_sd(LSMState *State, int niter, int Z_accept_last);
 
 // message wrappers
 void msg_mcmc_iter(int iter, int total, int beta_accept, int Z_accept);
