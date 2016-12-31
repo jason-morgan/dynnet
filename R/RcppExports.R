@@ -17,6 +17,10 @@ distance_penalty <- function(X) {
     .Call('dynnet_dmvnorm', PACKAGE = 'dynnet', x, mean, sigma, logd)
 }
 
+.C_rmvnorm <- function(n, mu, sigma) {
+    .Call('dynnet_rmvnorm', PACKAGE = 'dynnet', n, mu, sigma)
+}
+
 .C_llik_logit <- function(y, lp) {
     .Call('dynnet_C_llik_logit', PACKAGE = 'dynnet', y, lp)
 }

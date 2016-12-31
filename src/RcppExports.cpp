@@ -54,6 +54,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// rmvnorm
+arma::mat rmvnorm(int n, arma::vec mu, arma::mat sigma);
+RcppExport SEXP dynnet_rmvnorm(SEXP nSEXP, SEXP muSEXP, SEXP sigmaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type mu(muSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma(sigmaSEXP);
+    rcpp_result_gen = Rcpp::wrap(rmvnorm(n, mu, sigma));
+    return rcpp_result_gen;
+END_RCPP
+}
 // C_llik_logit
 double C_llik_logit(NumericVector y, NumericVector lp);
 RcppExport SEXP dynnet_C_llik_logit(SEXP ySEXP, SEXP lpSEXP) {

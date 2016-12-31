@@ -53,3 +53,33 @@ plot_mcmc <- function(model, ...)
     if (!is.null(model$estimate$samples))
         plot(model$estimate$samples, ...)
 }
+
+plot_samples <- function(model, nsamp=100, ...)
+{
+    ## stopifnot(model$method == "MH",
+    ##           "this model does not contain any posterior samples")
+
+    ## stopifnot(model$d %in% 1:2,
+    ##           "support for models with d>2 coming soon...")
+
+    ## Should this just be another utility function?
+    proc_Z <- function(theta, model)
+    {
+        Z <- decompose_theta(theta, model$beta_idx, model$d)$Z
+
+        if (!is.null(model$ref)) {
+            Z <- insert_ref(Z, model$ref, model$d)
+        }
+
+        Z
+    }
+
+    idx <- sample(1:nrow(model$estimate$samples), size=nsamp)
+    S <- model$estimate$samples[idx,]
+    Zs <- do.call(rbind, lapply(1:nsamp, function(i) proc_Z(S[i,], model)))
+
+    ## Should add a getter for this.
+    n <- vcount(model$graph)
+
+    plot(Zs, col=1:n, ...)
+}

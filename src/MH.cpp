@@ -156,7 +156,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 
   for (int i=0; i < idx.size(); ++i) {
     (State->Z)(idx[i], _) = (State->Z)(idx[i], _)
-      + rnorm(C, 0.0, 4.0/idx.size());
+      + rnorm(C, 0.0, 6.0/idx.size());
   }
 
   double new_posterior = (Model->lsm_posterior_fn)(Model, State);
@@ -217,7 +217,7 @@ double log_prior_Z(LSMModel *Model, LSMState *State)
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
-  sigma.fill_diag(4.0);
+  sigma.fill_diag(10.0);
 
   return(sum(dmvnorm(as<arma::mat>(State->Z),
 		     as<arma::rowvec>(mu),
