@@ -111,17 +111,26 @@ locations.lsmfit <- function(object, transform="procrustes", ...)
         est <- insert_ref(est, object$ref, object$d)
 
     if (object$d == 1)
-        est <- cbind(est, mean(all_pos))
+        est <- cbind(est, mean(est))
 
     rownames(est) <- vertex_attr(object$graph, "name")
     est
 }
 
-## Linear predictor for a single MCMC sample
-mcmc_sample_lp <- function(sample, object)
+## Linear predictor for a single MCMC sample, includes reference units when the
+## model had them.
+mcmc_sample_lp <- function(sample, model)
 {
-    D <- as.vector(dist(matrix(sample[-object$beta_idx], ncol=object$d)))
-    object$X %*% matrix(coef(object), ncol=1) - D
+    theta <- decompose_theta(sample, model$beta_idx, model$d)
+
+    if (!is.null(model$ref)) {
+        Z <- insert_ref(T$Z, model$ref, model$d)
+    } else {
+        Z <- T$Z
+    }
+
+    D <- as.vector(dist(Z))
+    model$X %*% matrix(theta$beta, ncol=1) - D
 }
 
 predict.lsmfit <- function(object, type="link", ...)
