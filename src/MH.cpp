@@ -124,13 +124,15 @@ void lsm_update_beta(LSMModel *Model, LSMState *State)
 {
   NumericVector orig_beta = clone(State->beta);
 
-  if ((State->beta).size() == 1) {
-    // Keep it positive when no other covariates are included
-    (State->beta)(0) = std::abs((State->beta)(0) + R::rnorm(0.0, 1.1));
-  }
-  else {
-    State->beta = State->beta + rnorm(Model->k, 0.0, 0.05/Model->k);
-  }
+  int C = (State->beta).size();
+  NumericVector mu(C);
+  NumericMatrix sigma(C);
+  mu.fill(0.0);
+  sigma.fill_diag(1.0 / C);
+
+  NumericMatrix delta = wrap(rmvnorm(1, as<arma::vec>(mu),
+				     as<arma::mat>(sigma)));
+  State->beta = State->beta + delta(0, _);
 
   double new_posterior = (Model->lsm_posterior_fn)(Model, State);
 
@@ -154,9 +156,15 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 
   NumericMatrix orig_Z = clone(State->Z);
 
+  NumericVector mu(C);
+  NumericMatrix sigma(C);
+  mu.fill(0.0);
+  sigma.fill_diag(0.5 / C);
+
   for (int i=0; i < idx.size(); ++i) {
-    (State->Z)(idx[i], _) = (State->Z)(idx[i], _)
-      + rnorm(C, 0.0, 6.0/idx.size());
+    NumericMatrix delta = wrap(rmvnorm(1, as<arma::vec>(mu),
+				       as<arma::mat>(sigma)));
+    (State->Z)(idx[i], _) = (State->Z)(idx[i], _) + delta(0, _);
   }
 
   double new_posterior = (Model->lsm_posterior_fn)(Model, State);
@@ -217,7 +225,7 @@ double log_prior_Z(LSMModel *Model, LSMState *State)
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
-  sigma.fill_diag(10.0);
+  sigma.fill_diag(2.0);
 
   return(sum(dmvnorm(as<arma::mat>(State->Z),
 		     as<arma::rowvec>(mu),

@@ -47,6 +47,10 @@ arma::vec dmvnorm(arma::mat x,
 		  arma::mat sigma,
 		  bool logd = false);
 
+arma::mat rmvnorm(int n,
+		  arma::vec mu,
+		  arma::mat sigma);
+
 // distances
 NumericVector dist_euclidean(NumericMatrix X);
 
