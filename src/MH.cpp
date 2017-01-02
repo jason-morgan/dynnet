@@ -130,9 +130,8 @@ void save_sample(LSMState *State, NumericMatrix *samples, int s)
 
 void lsm_update_beta(LSMModel *Model, LSMState *State)
 {
-  NumericVector orig_beta = clone(State->beta);
-
   int C = (State->beta).size();
+  NumericVector orig_beta(clone(State->beta));
   NumericVector mu(C);
   NumericMatrix sigma(C);
   mu.fill(0.0);
@@ -160,8 +159,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 {
   int R = (State->Z).nrow();
   int C = (State->Z).ncol();
-  NumericVector idx = Model->Z_idx - 1;	// R indices start at 1
-  NumericMatrix orig_Z = clone(State->Z);
+  NumericMatrix orig_Z(clone(State->Z));
 
   NumericVector mu(C);
   NumericMatrix sigma(C);
@@ -202,7 +200,7 @@ double log_prior_beta(LSMModel *Model, LSMState *State)
 
   if (Model->k == 1) {
     // Matches the prior used by HRH (2002)
-    p = R::dgamma(State->beta(0), 1.0, 1.0, 1);
+    p = R::dgamma((State->beta)[0], 1.0, 1.0, 1);
   }
   else {
     int n = Model->k;

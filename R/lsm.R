@@ -158,8 +158,8 @@ build_model_matrix <- function(ft, graph)
 ## TODO: control should be used here
 lsm_MLE <- function(theta, model, control)
 {
-    lwr <- c(rep(-Inf, model$k), rep(-5, length(theta)-model$k))
-    upr <- c(rep(Inf, model$k), rep(5, length(theta)-model$k))
+    lwr <- c(rep(-Inf, model$k), rep(-10, length(theta)-model$k))
+    upr <- c(rep(Inf, model$k), rep(10, length(theta)-model$k))
     est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
                  lower=lwr, upper=upr,
                  control=list(trace=model$verbose, fnscale=-1, maxit=500),
