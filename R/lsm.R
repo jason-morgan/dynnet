@@ -49,6 +49,8 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
     if (!is.null(seed))
         set.seed(seed)
 
+
+
     fc <- match.call(expand.dots=TRUE)
     ft <- terms(formula, specials=c("absdiff"))
     network <- get(all.vars(ft)[[attr(ft, "response")]])
@@ -89,7 +91,8 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
         graph <- set_vertex_attr(graph, "color", index=ref$idx, "#1C57A5")
 
 
-    model <- structure(list(edges=edges, period=1, k=ncol(X), d=d,
+    model <- structure(list(call=fc,
+                            edges=edges, period=1, k=ncol(X), d=d,
                             ref=ref,
                             family=family, X=X,
                             beta_idx=1:ncol(X), beta_names=colnames(X),

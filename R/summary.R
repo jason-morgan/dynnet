@@ -47,18 +47,26 @@ summary.lsmfit <- function(object, ...)
 
     if (object$method == "MLE") {
         se  <- sqrt(diag(vcov(object))[idx])
-        tbl <- data.frame("Estimate"=est, "SE"=se)
+        tbl <- data.frame("Estimate"=est, "Std. Error"=se)
     } else if (object$method == "MH") {
         if (length(idx) == 1)
             se <- sd(object$estimate$samples[, idx])
         else
             se <- apply(object$estimate$samples[, idx], 2, sd)
 
-        tbl <- data.frame("Posterior Mean"=est, "SD"=se)
+        tbl <- data.frame("Posterior Mean"=est, "Std. Dev."=se)
     }
 
     rownames(tbl) <- object$beta_names
-    tbl
+
+    cat("Latent Space Model\n")
+    cat("Call:\n")
+    print(object$call)
+
+    cat("Estimation method: ", object$method, "\n")
+
+    cat("\nCoefficients on exogenous predictors:\n")
+    print(tbl)
 }
 
 logLik.lsmfit <- function(object, ...)
