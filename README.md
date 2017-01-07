@@ -24,7 +24,7 @@ want to install directly from GitHub using Hadley Wickham's `devtools` package.
     install.packages(c("Rcpp", "RcppArmadillo", "igraph", "coda"))
     ```
 
-    On Mac, and issue has been found with the `Rcpp` dependency. A description of
+    On Mac, an issue has been found with the `Rcpp` dependency. A description of
     the problem and a work-around are available here:
 
     [https://github.com/jason-morgan/dynnet/issues/4](Issue 4: Install issue on Mac)
