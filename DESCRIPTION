@@ -1,15 +1,18 @@
 Package: dynnet
-Title: Models for Dynamic Networks
-Version: 0.0.0.9000
+Title: Latent Space Models for Static and Dynamic Networks
+Version: 0.0.0.9001
 Authors@R: 'Jason W. Morgan <jason.w.morgan@gmail.com> [aut, cre]'
 Description: This model implements several latent space models for
     static and dynamic networks.
 Depends:
-    R (>= 3.1.2)
+    R (>= 3.1.2),
+    igraph,
+    coda
 Imports:
     Rcpp (>= 0.12.2)
 LinkingTo: Rcpp, RcppArmadillo
 License: GPL-3
+URL: https://github.com/jason-morgan/dynnet
 LazyData: true
 Suggests:
     testthat
