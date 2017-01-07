@@ -54,7 +54,7 @@ plot_mcmc <- function(model, ...)
         plot(model$estimate$samples, ...)
 }
 
-plot_samples <- function(model, nsamp=100, ...)
+plot_samples <- function(model, nsamp=100, transformed=FALSE, ...)
 {
     ## stopifnot(model$method == "MH",
     ##           "this model does not contain any posterior samples")
@@ -74,9 +74,15 @@ plot_samples <- function(model, nsamp=100, ...)
         Z
     }
 
-    idx <- sample(1:nrow(model$estimate$samples), size=nsamp)
-    S <- model$estimate$samples[idx,]
-    Zs <- do.call(rbind, lapply(1:nsamp, function(i) proc_Z(S[i,], model)))
+    if (isTRUE(transformed)) {
+        idx <- sample(1:nrow(model$estimate$transformed), size=nsamp)
+        S <- model$estimate$transformed[idx,]
+        Zs <- do.call(rbind, lapply(1:nsamp, function(i) matrix(S[i,], ncol=model$d)))
+    } else {
+        idx <- sample(1:nrow(model$estimate$samples), size=nsamp)
+        S <- model$estimate$samples[idx,]
+        Zs <- do.call(rbind, lapply(1:nsamp, function(i) proc_Z(S[i,], model)))
+    }
 
     ## Should add a getter for this.
     n <- vcount(model$graph)
