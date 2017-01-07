@@ -46,7 +46,15 @@ List C_lsm_MH(NumericVector y,
     Model.lsm_posterior_fn = log_posterior_logit;
   }
 
-  LSMState State = {beta, Z, 0.0, 0, 0, 1.0};
+  LSMState State = {
+    beta,
+    Z,
+    0.0,		// posterior
+    0,			// beta_accept
+    0,			// Z_accept
+    0.1			// Z_proposal_sd
+  };
+
   NumericMatrix samples(Model.samplesize,
 			Model.k + ((State.Z).nrow() * (State.Z).ncol()));
   State.posterior = Model.lsm_posterior_fn(&Model, &State);
@@ -130,12 +138,13 @@ void save_sample(LSMState *State, NumericMatrix *samples, int s)
 
 void lsm_update_beta(LSMModel *Model, LSMState *State)
 {
-  int C = (State->beta).size();
+  int k = (State->beta).size();
   NumericVector orig_beta(clone(State->beta));
-  NumericVector mu(C);
-  NumericMatrix sigma(C);
+
+  NumericVector mu(k);
+  NumericMatrix sigma(k);
   mu.fill(0.0);
-  sigma.fill_diag(1.0 / C);
+  sigma.fill_diag((1.0 / k)*(1.0 / k));
 
   NumericMatrix delta = wrap(rmvnorm(1, as<arma::vec>(mu),
 				     as<arma::mat>(sigma)));
@@ -164,7 +173,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
   NumericVector mu(C);
   NumericMatrix sigma(C);
   mu.fill(0.0);
-  sigma.fill_diag(State->Z_proposal_sd);
+  sigma.fill_diag((State->Z_proposal_sd)*(State->Z_proposal_sd));
 
   arma::mat delta = rmvnorm(R, as<arma::vec>(mu), as<arma::mat>(sigma));
   State->Z = wrap(as<arma::mat>(State->Z) + delta);
