@@ -26,7 +26,8 @@ using namespace Rcpp;
 // simple adaptive proposals
 void adapt_Z_proposal_sd(LSMState *State, int niter, int Z_accept_last)
 {
-  double rate = (State->Z_accept - Z_accept_last) / 2000.0;
+  double rate = (State->Z_accept - Z_accept_last) /
+    ((State->Z).nrow() * 2000.0);
 
   if ((rate > 0.30) && (State->Z_proposal_sd < 10.0)) {
     State->Z_proposal_sd = State->Z_proposal_sd * 1.20;

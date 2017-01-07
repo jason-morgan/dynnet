@@ -24,8 +24,10 @@
 using namespace Rcpp;
 
 // Wrapper around a message printer
-void msg_mcmc_iter(int iter, int total,
-		   int beta_accept, int Z_accept)
+void msg_mcmc_iter(int iter,
+		   int total,
+		   int beta_accept,
+		   int Z_accept)
 {
   Rcpp::Rcout << "iter => "
 	      << iter
@@ -33,7 +35,7 @@ void msg_mcmc_iter(int iter, int total,
 	      << "( beta accept: "
 	      << (double(beta_accept) / double(iter)) * 100
 	      << "%  Z accept: "
-	      << (double(Z_accept) / double(iter)) * 100
+	      << (double(Z_accept) / double(iter * 15)) * 100
 	      << "% )"
 	      << std::endl;
 }

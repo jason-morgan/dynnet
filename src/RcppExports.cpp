@@ -112,6 +112,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test
+IntegerVector test(int n);
+RcppExport SEXP dynnet_test(SEXP nSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type n(nSEXP);
+    rcpp_result_gen = Rcpp::wrap(test(n));
+    return rcpp_result_gen;
+END_RCPP
+}
 // insert_ref
 NumericMatrix insert_ref(IntegerVector ref_idx, NumericMatrix ref_pos, IntegerVector est_idx, NumericMatrix est_pos);
 RcppExport SEXP dynnet_insert_ref(SEXP ref_idxSEXP, SEXP ref_posSEXP, SEXP est_idxSEXP, SEXP est_posSEXP) {

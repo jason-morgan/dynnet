@@ -33,6 +33,10 @@ distance_penalty <- function(X) {
     .Call('dynnet_C_lsm_MH', PACKAGE = 'dynnet', y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family)
 }
 
+.C_test <- function(n) {
+    .Call('dynnet_test', PACKAGE = 'dynnet', n)
+}
+
 .C_insert_ref <- function(ref_idx, ref_pos, est_idx, est_pos) {
     .Call('dynnet_insert_ref', PACKAGE = 'dynnet', ref_idx, ref_pos, est_idx, est_pos)
 }

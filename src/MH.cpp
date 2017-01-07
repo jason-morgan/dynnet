@@ -46,7 +46,7 @@ List C_lsm_MH(NumericVector y,
     Model.lsm_posterior_fn = log_posterior_logit;
   }
 
-  LSMState State = {beta, Z, 0.0, 0, 0, 1.0};
+  LSMState State = { beta, Z, 0.0, 0, 0, 2.0 };
   NumericMatrix samples(Model.samplesize,
 			Model.k + ((State.Z).nrow() * (State.Z).ncol()));
   State.posterior = Model.lsm_posterior_fn(&Model, &State);
@@ -159,26 +159,39 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 {
   int R = (State->Z).nrow();
   int C = (State->Z).ncol();
-  NumericMatrix orig_Z(clone(State->Z));
 
   NumericVector mu(C);
   NumericMatrix sigma(C);
   mu.fill(0.0);
   sigma.fill_diag(State->Z_proposal_sd);
 
-  arma::mat delta = rmvnorm(R, as<arma::vec>(mu), as<arma::mat>(sigma));
-  State->Z = wrap(as<arma::mat>(State->Z) + delta);
+  // randomly sample rows
+  IntegerVector idx = seq_len(R) - 1;
+  idx = Rcpp::RcppArmadillo::sample(idx,
+				    idx.size(),
+				    false,
+				    NumericVector::create());
 
-  double new_posterior = (Model->lsm_posterior_fn)(Model, State);
-  double r = R::runif(0, 1);
-  double p = exp(new_posterior - State->posterior);
+  for (int i=0; i < idx.size(); ++i) {
 
-  if (r < p) {
-    State->posterior = new_posterior;
-    State->Z_accept++;
-  }
-  else {
-    State->Z = orig_Z;
+    NumericVector orig = State->Z(i, _);
+    NumericVector delta = wrap(rmvnorm(1,
+				       as<arma::vec>(mu),
+				       as<arma::mat>(sigma)));
+    State->Z(i, _) = State->Z(i, _) + delta;
+
+    double new_posterior = (Model->lsm_posterior_fn)(Model, State);
+    double r = R::runif(0, 1);
+    double p = exp(new_posterior - State->posterior);
+
+    if (r < p) {
+      State->posterior = new_posterior;
+      State->Z_accept++;
+    }
+    else {
+      State->Z(i, _) = orig;
+    }
+
   }
 }
 
@@ -227,7 +240,7 @@ double log_prior_Z(LSMModel *Model, LSMState *State)
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
-  sigma.fill_diag(10.0);
+  sigma.fill_diag(5.0);
 
   return(sum(dmvnorm(as<arma::mat>(State->Z),
 		     as<arma::rowvec>(mu),
