@@ -25,51 +25,45 @@
 // [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
+using namespace arma;
 
-// [[Rcpp::export(.C_llik_logit)]]
-double C_llik_logit(NumericVector y, NumericVector lp)
+
+double log_prior_beta(LSMModel *Model, LSMState *State)
 {
-  double llik = sum(y * lp - log1p(exp(lp)));
-  return(llik);
-}
+  double p = 0.0;
 
-double llik_logit(LSMModel *Model, NumericVector lp)
-{
-  double llik = sum(Model->y * lp - log1p(exp(lp)));
+  if (Model->k == 1) {
+    // Matches the prior used by HRH (2002)
+    p = R::dgamma((State->beta)[0], 1.0, 1.0, 1);
+  }
+  else {
+    int n = Model->k;
+    NumericMatrix beta(1, Model->k);
+    NumericVector mu(n);
+    NumericMatrix sigma(n);
 
-  // Left for reference. The above is faster, but this makes it clear what is
-  // being calculated.
-  // for (int i = 0; i < n; ++i) {
-  //   double p = R::plogis(lp[i], 0.0, 1.0, 1.0, false);
-  //   llik += R::dbinom(Model->y[i], 1.0, p, true);
-  // }
+    beta(0,_) = State->beta;
+    mu.fill(0.0);
+    sigma.fill_diag(2.0);
 
-  return(llik);
-}
-
-// [[Rcpp::export(.C_llik_poisson)]]
-double C_llik_poisson(NumericVector y, NumericVector lp)
-{
-  int n = y.size();
-  double llik = 0;
-
-  for (int i = 0; i < n; ++i) {
-    double lambda = exp(lp[i]);
-    llik += R::dpois(y[i], lambda, true);
+    p = sum(dmvnorm(as<arma::mat>(beta),
+		    as<arma::rowvec>(mu),
+		    as<arma::mat>(sigma), true));
   }
 
-  return(llik);
+  return(p);
 }
 
-double llik_poisson(LSMModel *Model, NumericVector lp)
+double log_prior_Z(LSMModel *Model, LSMState *State)
 {
-  int n = Model->y.size();
-  double llik = 0;
+  int n = Model->d;
+  NumericVector mu(n);
+  NumericMatrix sigma(n);
 
-  for (int i = 0; i < n; ++i) {
-    double lambda = exp(lp[i]);
-    llik += R::dpois(Model->y[i], lambda, true);
-  }
+  mu.fill(0.0);
+  sigma.fill_diag(5.0);
 
-  return(llik);
+  return(sum(dmvnorm(as<arma::mat>(State->Z),
+		     as<arma::rowvec>(mu),
+		     as<arma::mat>(sigma), true)));
 }

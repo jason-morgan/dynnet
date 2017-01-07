@@ -17,8 +17,8 @@ planned for the near future.
 \tabular{ll}{
 Package: \tab dynnet \cr
 Type: \tab Package\cr
-Version: \tab 0.0.9000\cr
-Date: \tab 2016-12-26\cr
+Version: \tab 0.0.9001\cr
+Date: \tab 2017-01-07\cr
 License: \tab GPL-3 \cr
 LazyLoad: \tab yes\cr
 }
