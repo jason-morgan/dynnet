@@ -29,26 +29,20 @@ using namespace Rcpp;
 // [[Rcpp::export(.C_llik_logit)]]
 double C_llik_logit(NumericVector y, NumericVector lp)
 {
-  int n = y.size();
-  double llik = 0;
-
-  for (int i = 0; i < n; ++i) {
-    double p = R::plogis(lp[i], 0.0, 1.0, 1.0, false);
-    llik += R::dbinom(y[i], 1.0, p, true);
-  }
-
+  double llik = sum(y * lp - log1p(exp(lp)));
   return(llik);
 }
 
 double llik_logit(LSMModel *Model, NumericVector lp)
 {
-  int n = Model->y.size();
-  double llik = 0;
+  double llik = sum(Model->y * lp - log1p(exp(lp)));
 
-  for (int i = 0; i < n; ++i) {
-    double p = R::plogis(lp[i], 0.0, 1.0, 1.0, false);
-    llik += R::dbinom(Model->y[i], 1.0, p, true);
-  }
+  // Left for reference. The above is faster, but this makes it clear what is
+  // being computed.
+  // for (int i = 0; i < n; ++i) {
+  //   double p = R::plogis(lp[i], 0.0, 1.0, 1.0, false);
+  //   llik += R::dbinom(Model->y[i], 1.0, p, true);
+  // }
 
   return(llik);
 }

@@ -227,7 +227,7 @@ double log_prior_Z(LSMModel *Model, LSMState *State)
   NumericMatrix sigma(n);
 
   mu.fill(0.0);
-  sigma.fill_diag(10.0);
+  sigma.fill_diag(5.0);
 
   return(sum(dmvnorm(as<arma::mat>(State->Z),
 		     as<arma::rowvec>(mu),
