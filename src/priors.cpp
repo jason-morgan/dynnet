@@ -35,7 +35,7 @@ double log_prior_beta(LSMModel *Model, LSMState *State)
   if (Model->k == 1) {
     // Matches the prior used by HRH (2002)
     // p = R::dgamma((State->beta)[0], 1.0, 1.0, 1);
-    p = R::dgamma((State->beta)[0], 2.0, 1.0, 1);
+    p = R::dgamma((State->beta)[0], 1.0, 1.0, 1);
   }
   else {
     int n = Model->k;
