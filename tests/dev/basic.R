@@ -15,16 +15,17 @@ load_all("~/lib/R/dynnet")
 data(florentine, package="ergm")
 (Flo  <- to_dynnet(flomarriage))
 
+library(latentnet)
+
 ## -----------------------------------------------------------------------------
 ## Without reference units
 ## -----------------------------------------------------------------------------
 
 ## tweak for better mixing
-ctl <- control.lsm(MCMC.burnin=2^16, MCMC.interval=100)
-
-document("~/lib/R/dynnet")
+ctl <- control.lsm(MCMC.burnin=2^18, MCMC.interval=100)
 model0 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234)
-model1 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234, method="MH", control=ctl)
+system.time(model1 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234, method="MH",
+                          control=ctl))
 
 ## -----------------------------------------------------------------------------
 ## With reference units
