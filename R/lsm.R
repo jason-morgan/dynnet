@@ -112,15 +112,18 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
             rm_idx <- ref$idx + max(model$beta_idx)
             rm_idx <- rm_idx + rep(0:(d-1), each=length(ref$idx)) * nodes
             est$samples <- coda::mcmc(est$samples[,-rm_idx])
-            varnames(est$samples) <- c(model$beta_names,
+            varnames(est$samples) <- c("lpr_graph",
+                                       model$beta_names,
                                        model$Z_names[-(rm_idx -
                                                        max(model$beta_idx))])
         } else {
             est$samples <- coda::mcmc(est$samples)
-            varnames(est$samples) <- c(model$beta_names, model$Z_names)
+            varnames(est$samples) <- c("lpr_graph", model$beta_names,
+                                       model$Z_names)
             Zstar <- matrix(theta[-model$beta_idx], ncol=model$d)
+            rm_idx <- c(1, model$beta_idx+1)
             est$transformed <-
-                transform_procrustes(Zstar, est$samples[,-model$beta_idx],
+                transform_procrustes(Zstar, est$samples[,-rm_idx],
                                      model$d)
         }
     } else {

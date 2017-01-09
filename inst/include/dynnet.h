@@ -11,9 +11,18 @@ using namespace Rcpp;
 struct LSMState
 {
     NumericVector beta;
+    NumericVector old_beta;
     NumericMatrix Z;
+    NumericMatrix old_Z;
+    NumericVector Xb;
+    NumericVector old_Xb;
+    NumericVector dist;
+    NumericVector old_dist;
+    double lpr_graph;
     double posterior;
+    double beta_log_prior;
     int beta_accept;
+    double Z_log_prior;
     int Z_accept;
     double Z_proposal_sd;
 };
@@ -29,6 +38,7 @@ struct LSMModel
     int samplesize;
     int interval;
     double (*lsm_posterior_fn)(LSMModel*, LSMState*);
+    double (*lsm_lpr_fn)(LSMModel*, NumericVector lp);
 };
 
 // likelihoods

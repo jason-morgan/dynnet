@@ -44,20 +44,41 @@ List C_lsm_MH(NumericVector y,
   LSMModel Model = {y, X, Z_idx, k, d, burnin, samplesize, interval};
   if (family == "bernoulli") {
     Model.lsm_posterior_fn = log_posterior_logit;
+    Model.lsm_lpr_fn = llik_logit;
   }
+
+  // initiate starting values and State
+  NumericVector Xb = wrap(as<arma::mat>(X) * as<arma::vec>(beta));
+  NumericVector dist = dist_euclidean(Z);
+  NumericVector lp = (Xb - dist);
+  double lpr_graph = Model.lsm_lpr_fn(&Model, lp);
 
   LSMState State = {
     beta,
+    beta,			// old_beta
     Z,
-    0.0,		// posterior
-    0,			// beta_accept
-    0,			// Z_accept
-    0.1			// Z_proposal_sd
+    Z,				// old_Z
+    Xb,
+    Xb,				// old_Xb
+    dist,
+    dist,			// old_dist
+    lpr_graph,
+    0.0,			// posterior
+    0.0,			// beta_log_prior
+    0,				// beta_accept
+    0.0,			// Z_log_prior
+    0,				// Z_accept
+    1.0				// Z_proposal_sd
   };
 
-  NumericMatrix samples(Model.samplesize,
-			Model.k + ((State.Z).nrow() * (State.Z).ncol()));
   State.posterior = Model.lsm_posterior_fn(&Model, &State);
+  State.beta_log_prior = log_prior_beta(&Model, &State);
+  State.Z_log_prior = log_prior_Z(&Model, &State);
+
+  // matrix for samples. the extra column is for storing the log probability of
+  // the graph
+  NumericMatrix samples(Model.samplesize,
+			1 + Model.k + ((State.Z).nrow() * (State.Z).ncol()));
 
   // burnin
   int Z_accept_last = 0;	// records the last Z acceptance
@@ -118,14 +139,18 @@ List C_lsm_MH(NumericVector y,
 
 void save_sample(LSMState *State, NumericMatrix *samples, int s)
 {
-  int n = (State->beta).size() + ((State->Z).nrow() * (State->Z).ncol());
+  int n = 1 +
+    (State->beta).size() +
+    ((State->Z).nrow() * (State->Z).ncol());
   NumericVector x(n);
 
+  x[0] = State->lpr_graph;
+
   for (int j = 0; j < (State->beta).size(); ++j) {
-    x[j] = State->beta[j];
+    x[j+1] = State->beta[j];	// + 1 for the log prob
   }
 
-  int i = (State->beta).size();
+  int i = (State->beta).size() + 1;
   for (int c = 0; c < (State->Z).ncol(); ++c) {
     for (int r = 0; r < (State->Z).nrow(); ++r) {
       x[i] = State->Z(r,c);
@@ -138,29 +163,33 @@ void save_sample(LSMState *State, NumericMatrix *samples, int s)
 
 void lsm_update_beta(LSMModel *Model, LSMState *State)
 {
-  int k = (State->beta).size();
-  NumericVector orig_beta(clone(State->beta));
-
-  NumericVector mu(k);
-  NumericMatrix sigma(k);
+  NumericVector mu(Model->k);
+  NumericMatrix sigma(Model->k);
   mu.fill(0.0);
-  sigma.fill_diag((1.0 / k)*(1.0 / k));
-
+  sigma.fill_diag((1.0 / Model->k) * (1.0 / Model->k));
   NumericMatrix delta = wrap(rmvnorm(1, as<arma::vec>(mu),
 				     as<arma::mat>(sigma)));
+
+  State->old_beta = clone(State->beta);
+  State->old_Xb = clone(State->Xb);
   State->beta = State->beta + delta(0, _);
+  State->Xb = wrap(as<arma::mat>(Model->X) * as<arma::vec>(State->beta));
 
-  double new_posterior = (Model->lsm_posterior_fn)(Model, State);
+  NumericVector lp = (State->Xb - State->dist);
+  double new_lpr_graph = (Model->lsm_lpr_fn)(Model, lp);
+  double new_beta_log_prior = log_prior_beta(Model, State);
 
+  double p = exp((new_lpr_graph + new_beta_log_prior) -
+		 (State->lpr_graph + State->beta_log_prior));
   double r = R::runif(0,1);
-  double p = exp(new_posterior - State->posterior);
 
   if (r < p) {
-    State->posterior = new_posterior;
+    State->lpr_graph = new_lpr_graph;
+    State->beta_log_prior = new_beta_log_prior;
     State->beta_accept++;
-  }
-  else {
-    State->beta = orig_beta;
+  } else {
+    State->beta = State->old_beta;
+    State->Xb = State->old_Xb;
   }
 }
 
@@ -168,26 +197,33 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 {
   int R = (State->Z).nrow();
   int C = (State->Z).ncol();
-  NumericMatrix orig_Z(clone(State->Z));
 
   NumericVector mu(C);
   NumericMatrix sigma(C);
   mu.fill(0.0);
   sigma.fill_diag((State->Z_proposal_sd)*(State->Z_proposal_sd));
-
   arma::mat delta = rmvnorm(R, as<arma::vec>(mu), as<arma::mat>(sigma));
-  State->Z = wrap(as<arma::mat>(State->Z) + delta);
 
-  double new_posterior = (Model->lsm_posterior_fn)(Model, State);
-  double r = R::runif(0, 1);
-  double p = exp(new_posterior - State->posterior);
+  State->old_Z = clone(State->Z);
+  State->old_dist = clone(State->dist);
+  State->Z = wrap(as<arma::mat>(State->Z) + delta);
+  State->dist = dist_euclidean(State->Z);
+
+  NumericVector lp = (State->Xb - State->dist);
+  double new_lpr_graph = (Model->lsm_lpr_fn)(Model, lp);
+  double new_Z_log_prior = log_prior_Z(Model, State);
+
+  double p = exp((new_lpr_graph + new_Z_log_prior) -
+		 (State->lpr_graph + State->Z_log_prior));
+  double r = R::runif(0,1);
 
   if (r < p) {
-    State->posterior = new_posterior;
+    State->lpr_graph = new_lpr_graph;
+    State->Z_log_prior = new_Z_log_prior;
     State->Z_accept++;
-  }
-  else {
-    State->Z = orig_Z;
+  } else {
+    State->Z = State->old_Z;
+    State->dist = State->old_dist;
   }
 }
 
