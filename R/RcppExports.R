@@ -5,6 +5,10 @@
     .Call('dynnet_dist_euclidean', PACKAGE = 'dynnet', X)
 }
 
+.C_dist_euclidean2 <- function(X) {
+    .Call('dynnet_dist_euclidean2', PACKAGE = 'dynnet', X)
+}
+
 norm_euclidean <- function(X) {
     .Call('dynnet_norm_euclidean', PACKAGE = 'dynnet', X)
 }
@@ -29,8 +33,8 @@ distance_penalty <- function(X) {
     .Call('dynnet_C_llik_poisson', PACKAGE = 'dynnet', y, lp)
 }
 
-.C_lsm_MH <- function(y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family) {
-    .Call('dynnet_C_lsm_MH', PACKAGE = 'dynnet', y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family)
+.C_lsm_MH <- function(y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family, dist_metric) {
+    .Call('dynnet_C_lsm_MH', PACKAGE = 'dynnet', y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family, dist_metric)
 }
 
 .C_insert_ref <- function(ref_idx, ref_pos, est_idx, est_pos) {

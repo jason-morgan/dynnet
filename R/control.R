@@ -28,12 +28,16 @@
 ##'     samples. Defaults to 100.
 ##' @param MCMC.samplesize Integer. Number of samples from the posterior to be
 ##'     saved. Defaults to 1024.
+##' @param dist_metric Character string indicating the distance metric to
+##'     use. Valid entries include \code{"euclidean"} for the standard Euclidean
+##'     distance and \code{"euclidean2"} for squared Euclidean distance.
 ##' @return List of control parameters.
 ##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
 ##' @export
 control.lsm <- function(MCMC.burnin=2^10,
                         MCMC.interval=100,
-                        MCMC.samplesize=2^10)
+                        MCMC.samplesize=2^10,
+                        dist_metric="euclidean")
 {
     sapply(names(formals(sys.function())), get,
            envir=sys.frame(sys.parent(0)),

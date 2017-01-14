@@ -49,7 +49,7 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
     if (!is.null(seed))
         set.seed(seed)
 
-
+    stopifnot(control$dist_fn %in% c("euclidean", "euclidean2"))
 
     fc <- match.call(expand.dots=TRUE)
     ft <- terms(formula, specials=c("absdiff"))
@@ -164,6 +164,11 @@ build_model_matrix <- function(ft, graph)
 ## TODO: control should be used here
 lsm_MLE <- function(theta, model, control)
 {
+    ## Set distance metric
+    model$dist <- switch(control$dist_metric,
+                         "euclidean"  = .C_dist_euclidean,
+                         "euclidean2" = .C_dist_euclidean2)
+
     lwr <- c(rep(-Inf, model$k), rep(-10, length(theta)-model$k))
     upr <- c(rep(Inf, model$k), rep(10, length(theta)-model$k))
     est <- optim(theta, calc_likelihood, model=model, method="L-BFGS-B",
@@ -178,9 +183,7 @@ lsm_MLE <- function(theta, model, control)
     est
 }
 
-lsm_MH <- function(theta, model, control=control.lsm(MCMC.burnin=2^10,
-                                                     MCMC.samplesize=2^10,
-                                                     MCMC.interval=10))
+lsm_MH <- function(theta, model, control)
 {
     Zstar <- matrix(theta[-model$beta_idx], ncol=model$d)
     if (!is.null(model$ref)) {
@@ -196,7 +199,7 @@ lsm_MH <- function(theta, model, control=control.lsm(MCMC.burnin=2^10,
     .C_lsm_MH(model$edges, model$X, Z_idx, model$k, model$d,
               control$MCMC.burnin, control$MCMC.samplesize,
               control$MCMC.interval, beta, Z,
-              model$family)
+              model$family, control$dist_metric)
 }
 
 calc_likelihood <- function(theta, model=NULL)
@@ -212,7 +215,7 @@ calc_likelihood <- function(theta, model=NULL)
         Z <- T$Z
     }
 
-    lp <- Xbeta - .C_dist_euclidean(Z)
+    lp <- Xbeta - model$dist(Z)
     .C_llik_logit(model$edges, lp)
 }
 

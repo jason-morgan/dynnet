@@ -18,6 +18,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dist_euclidean2
+NumericVector dist_euclidean2(NumericMatrix X);
+RcppExport SEXP dynnet_dist_euclidean2(SEXP XSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type X(XSEXP);
+    rcpp_result_gen = Rcpp::wrap(dist_euclidean2(X));
+    return rcpp_result_gen;
+END_RCPP
+}
 // norm_euclidean
 NumericVector norm_euclidean(NumericMatrix X);
 RcppExport SEXP dynnet_norm_euclidean(SEXP XSEXP) {
@@ -92,8 +103,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // C_lsm_MH
-List C_lsm_MH(NumericVector y, NumericMatrix X, NumericVector Z_idx, int k, int d, int burnin, int samplesize, int interval, NumericVector beta, NumericMatrix Z, String family);
-RcppExport SEXP dynnet_C_lsm_MH(SEXP ySEXP, SEXP XSEXP, SEXP Z_idxSEXP, SEXP kSEXP, SEXP dSEXP, SEXP burninSEXP, SEXP samplesizeSEXP, SEXP intervalSEXP, SEXP betaSEXP, SEXP ZSEXP, SEXP familySEXP) {
+List C_lsm_MH(NumericVector y, NumericMatrix X, NumericVector Z_idx, int k, int d, int burnin, int samplesize, int interval, NumericVector beta, NumericMatrix Z, String family, String dist_metric);
+RcppExport SEXP dynnet_C_lsm_MH(SEXP ySEXP, SEXP XSEXP, SEXP Z_idxSEXP, SEXP kSEXP, SEXP dSEXP, SEXP burninSEXP, SEXP samplesizeSEXP, SEXP intervalSEXP, SEXP betaSEXP, SEXP ZSEXP, SEXP familySEXP, SEXP dist_metricSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -108,7 +119,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Z(ZSEXP);
     Rcpp::traits::input_parameter< String >::type family(familySEXP);
-    rcpp_result_gen = Rcpp::wrap(C_lsm_MH(y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family));
+    Rcpp::traits::input_parameter< String >::type dist_metric(dist_metricSEXP);
+    rcpp_result_gen = Rcpp::wrap(C_lsm_MH(y, X, Z_idx, k, d, burnin, samplesize, interval, beta, Z, family, dist_metric));
     return rcpp_result_gen;
 END_RCPP
 }

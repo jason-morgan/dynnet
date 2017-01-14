@@ -39,7 +39,8 @@ List C_lsm_MH(NumericVector y,
 	      int interval,
 	      NumericVector beta,
 	      NumericMatrix Z,
-	      String family)
+	      String family,
+	      String dist_metric)
 {
   LSMModel Model = {y, X, Z_idx, k, d, burnin, samplesize, interval};
   if (family == "bernoulli") {
@@ -47,9 +48,17 @@ List C_lsm_MH(NumericVector y,
     Model.lsm_lpr_fn = llik_logit;
   }
 
+  // Set the distance function
+  if (dist_metric == "euclidean") {
+    Model.lsm_dist_fn = dist_euclidean;
+  }
+  else if (dist_metric == "euclidean2") {
+    Model.lsm_dist_fn = dist_euclidean2;
+  }
+
   // initiate starting values and State
   NumericVector Xb = wrap(as<arma::mat>(X) * as<arma::vec>(beta));
-  NumericVector dist = dist_euclidean(Z);
+  NumericVector dist = Model.lsm_dist_fn(Z);
   NumericVector lp = (Xb - dist);
   double lpr_graph = Model.lsm_lpr_fn(&Model, lp);
 
@@ -207,7 +216,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
   State->old_Z = clone(State->Z);
   State->old_dist = clone(State->dist);
   State->Z = wrap(as<arma::mat>(State->Z) + delta);
-  State->dist = dist_euclidean(State->Z);
+  State->dist = (Model->lsm_dist_fn)(State->Z);
 
   NumericVector lp = (State->Xb - State->dist);
   double new_lpr_graph = (Model->lsm_lpr_fn)(Model, lp);
@@ -230,7 +239,7 @@ void lsm_update_Z(LSMModel *Model, LSMState *State)
 double log_posterior_logit(LSMModel *Model, LSMState *State)
 {
   NumericVector Xb = wrap(as<arma::mat>(Model->X) * as<arma::vec>(State->beta));
-  NumericVector lp = (Xb - dist_euclidean(State->Z));
+  NumericVector lp = (Xb - (Model->lsm_dist_fn)(State->Z));
 
   double post = llik_logit(Model, lp)
     + log_prior_beta(Model, State)

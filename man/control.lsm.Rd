@@ -5,7 +5,7 @@
 \title{Latent Space Model Control Parameters}
 \usage{
 control.lsm(MCMC.burnin = 2^10, MCMC.interval = 100,
-  MCMC.samplesize = 2^10)
+  MCMC.samplesize = 2^10, dist_metric = "euclidean")
 }
 \arguments{
 \item{MCMC.burnin}{Integer. Burn-in for MCMC sampler. Defaults to 1024.}
@@ -15,6 +15,10 @@ samples. Defaults to 100.}
 
 \item{MCMC.samplesize}{Integer. Number of samples from the posterior to be
 saved. Defaults to 1024.}
+
+\item{dist_metric}{Character string indicating the distance metric to
+use. Valid entries include \code{"euclidean"} for the standard Euclidean
+distance and \code{"euclidean2"} for squared Euclidean distance.}
 }
 \value{
 List of control parameters.

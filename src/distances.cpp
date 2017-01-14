@@ -23,6 +23,8 @@
 
 using namespace Rcpp;
 
+// Euclidean distance
+
 inline double euclidean(NumericVector x, NumericVector y)
 {
   double d = 0.0;
@@ -45,6 +47,37 @@ NumericVector dist_euclidean(NumericMatrix X)
   for (int j=0; j < (nrow-1); ++j) {
     for (int i=(j+1); i < nrow; ++i) {
       d[idx] = euclidean(X(j,_), X(i,_));
+      idx++;
+    }
+  }
+
+  return(d);
+}
+
+// Squared Euclidean distance
+
+inline double euclidean2(NumericVector x, NumericVector y)
+{
+  double d = 0.0;
+
+  for (int i = 0; i < x.size(); ++i) {
+    d += pow(x[i] - y[i], 2.0);
+  }
+
+  return(d);
+}
+
+// [[Rcpp::export(.C_dist_euclidean2)]]
+NumericVector dist_euclidean2(NumericMatrix X)
+{
+  int nrow = X.nrow();
+
+  NumericVector d(nrow * (nrow-1) / 2);
+  int idx = 0;
+
+  for (int j=0; j < (nrow-1); ++j) {
+    for (int i=(j+1); i < nrow; ++i) {
+      d[idx] = euclidean2(X(j,_), X(i,_));
       idx++;
     }
   }

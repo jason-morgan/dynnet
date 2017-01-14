@@ -39,6 +39,7 @@ struct LSMModel
     int interval;
     double (*lsm_posterior_fn)(LSMModel*, LSMState*);
     double (*lsm_lpr_fn)(LSMModel*, NumericVector lp);
+    NumericVector (*lsm_dist_fn)(NumericMatrix X);
 };
 
 // likelihoods
@@ -64,6 +65,7 @@ arma::mat rmvnorm(int n,
 
 // distances
 NumericVector dist_euclidean(NumericMatrix X);
+NumericVector dist_euclidean2(NumericMatrix X);
 
 // MH
 void lsm_update_Z(LSMModel *Model, LSMState *State);
