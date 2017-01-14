@@ -26,7 +26,8 @@ vcov.lsmfit <- function(object, ...)
 
 coef.lsmfit <- function(object, ...)
 {
-    idx <- object$beta_idx
+    ## shift idx +1 to account for log probability
+    idx <- object$beta_idx + 1
     if (object$method == "MLE") {
         est <- object$estimate$par[idx]
     } else if (object$method == "MH") {
@@ -163,4 +164,38 @@ predict.lsmfit <- function(object, type="link", ...)
     }
 
     pred
+}
+
+##' Print dynnet network object
+##'
+##' Print dynnet network object
+##' @title Print dynnet Network Object
+##' @param network dynnet network object.
+##' @return Prints.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @export
+print <- function(object)
+{
+    UseMethod("print")
+}
+
+##' @export
+##' @rdname print
+print.dynnet <- function(object)
+{
+    cat("DYNNET\n")
+    cat("  |- Periods:", periods(object), "\n")
+    cat("  |- Nodes:  ", do.call(c, vcount(object)), "\n")
+}
+
+##' @export
+##' @rdname print
+print.lsmfit <- function(object)
+{
+    cat("Latent Space Model\n")
+    cat("  |- Call:")
+    print(object$call)
+
+    cat("  |- Estimation method: ", object$method, "\n")
+    cat("  |- Distance metric: ", object$dist_metric, "\n")
 }
