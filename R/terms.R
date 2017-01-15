@@ -29,3 +29,18 @@ absdiff <- function(graph, vattr)
     a <- outer(x, x, function(x1, x2) abs(x1 - x2))
     a[lower.tri(a)]
 }
+
+covmatch <- function(graph, vattr)
+{
+    x <- vertex_attr(graph, vattr)
+    if (!is.factor(x) || is.character(x)) {
+        warning("variable ", vattr,
+                " is neither a factor or character vector. ",
+                " Coercing to factor (you may not want this).",
+                immediate.=TRUE)
+        x <- factor(x)
+    }
+
+    a <- outer(x, x, function(x1, x2) x1 == x2)
+    a[lower.tri(a)]
+}

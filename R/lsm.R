@@ -49,10 +49,10 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
     if (!is.null(seed))
         set.seed(seed)
 
-    stopifnot(control$dist_fn %in% c("euclidean", "euclidean2"))
+    stopifnot(control$dist_metric %in% c("euclidean", "euclidean2"))
 
     fc <- match.call(expand.dots=TRUE)
-    ft <- terms(formula, specials=c("absdiff"))
+    ft <- terms(formula, specials=c("absdiff", "covmatch"))
     network <- get(all.vars(ft)[[attr(ft, "response")]])
     graph <- get_graph(network, period=period)
 
@@ -131,6 +131,7 @@ lsm <- function(formula, d=1, period=1, ref=NULL, family="bernoulli",
     }
 
     model$method <- method
+    model$dist_metric <- control$dist_metric
     model$graph <- graph
     model$estimate <- est
 
