@@ -48,10 +48,14 @@ plot.lsmfit <- function(model, transform="procrustes", ...)
     plot(G, layout=est, ...)
 }
 
-plot_mcmc <- function(model, ...)
+plot_mcmc <- function(model, transformed=FALSE, ...)
 {
-    if (!is.null(model$estimate$samples))
-        plot(model$estimate$samples, ...)
+    if (!is.null(model$estimate$samples)) {
+        if (isTRUE(transformed))
+            plot(model$estimate$transformed, ...)
+        else
+            plot(model$estimate$samples, ...)
+    }
 }
 
 plot_samples <- function(model, nsamp=100, transformed=FALSE, ...)
