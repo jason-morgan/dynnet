@@ -88,8 +88,6 @@ plot_samples <- function(model, nsamp=100, transformed=FALSE, ...)
         Zs <- do.call(rbind, lapply(1:nsamp, function(i) proc_Z(S[i,], model)))
     }
 
-    ## Should add a getter for this.
     n <- vcount(model$graph)
-
     plot(Zs, col=1:n, ...)
 }
