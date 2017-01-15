@@ -144,48 +144,6 @@ periods.dynnet <- function(network)
     network$periods
 }
 
-##' The number of nodes in the dynamic network.
-##'
-##' The number of nodes in the dynamic network.
-##' @title Number of Nodes in the Network
-##' @param network dynnet network object.
-##' @return Number of nodes in the (possibly dynamic) network.
-##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-##' @export
-nodes <- function(network)
-{
-    UseMethod("nodes")
-}
-
-##' @export
-##' @rdname nodes
-nodes.dynnet <- function(network)
-{
-    network$nodes
-}
-
-##' Print dynnet network object
-##'
-##' Print dynnet network object
-##' @title Print dynnet Network Object
-##' @param network dynnet network object.
-##' @return Prints.
-##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
-##' @export
-print <- function(network)
-{
-    UseMethod("print")
-}
-
-##' @export
-##' @rdname print
-print.dynnet <- function(network)
-{
-    cat("DYNNET\n")
-    cat("  |- Periods:", periods(network), "\n")
-    cat("  |- Nodes:  ",   nodes(network), "\n")
-}
-
 ##' Concatenate dynnet objects into a single composite network.
 ##'
 ##' Currently, no checking is done to verify the homogeneity of the networks

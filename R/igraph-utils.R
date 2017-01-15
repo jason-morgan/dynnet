@@ -22,6 +22,15 @@
 ## This file contains utility functions that mirror some of those found in the
 ## igraph package.
 
+##' The number of vertices in a graph
+##'
+##' The number of verices in a graph.
+##' @title Number of Vertices in a Graph
+##' @param object dynnet network, latent space model fit, or igraph object.
+##' @return Number of vertices in the graph.
+##' @author Jason W. Morgan \email{jason.w.morgan@@gmail.com}
+##' @export
+##' @rdname vcount
 vcount <- function(object, ...)
 {
     UseMethod("vcount")
@@ -39,4 +48,11 @@ vcount.igraph <- function(object, ...)
 vcount.dynnet <- function(object, ...)
 {
     gapply(object, igraph::vcount)
+}
+
+##' @export
+##' @rdname vcount
+vcount.lsmfit <- function(object, ...)
+{
+    igraph::vcount(object$graph)
 }
