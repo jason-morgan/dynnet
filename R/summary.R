@@ -110,7 +110,7 @@ locations.lsmfit <- function(object, transform="procrustes", ...)
         if (transform == "procrustes" && is.null(object$ref)) {
             est <- colMeans(object$estimate$transformed)
         } else {
-            est <- object$estimate$samples[,-object$beta_idx]
+            est <- object$estimate$samples[,-c(1, object$beta_idx+1)]
             est <- colMeans(est)
         }
     }
@@ -193,7 +193,7 @@ print.dynnet <- function(object)
 print.lsmfit <- function(object)
 {
     cat("Latent Space Model\n")
-    cat("  |- Call:")
+    cat("  |- Call: ")
     print(object$call)
 
     cat("  |- Estimation method: ", object$method, "\n")
