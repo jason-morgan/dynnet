@@ -2,7 +2,8 @@
 ## Testing during development
 ## =============================================================================
 
-options(width=120)
+library(checkpoint)
+checkpoint("2018-05-01")
 
 library(devtools)
 library(lattice)
@@ -27,18 +28,21 @@ model0 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234)
 system.time(model1 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234, method="MH",
                           control=ctl))
 
-ctl1 <- control.lsm(MCMC.burnin=2^16, MCMC.interval=100, dist_metric="euclidean")
+ctl1 <- control.lsm(MCMC.burnin=2^18, MCMC.interval=100, dist_metric="euclidean")
 model1 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234, method="MH", control=ctl1)
 
-ctl2 <- control.lsm(MCMC.burnin=2^16, MCMC.interval=100, dist_metric="euclidean2")
+ctl2 <- control.lsm(MCMC.burnin=2^18, MCMC.interval=100, dist_metric="euclidean2")
 model2 <- lsm(Flo ~ 1, ref=NULL, d=2, seed=1234, method="MH", control=ctl2)
 
 pdf("~/tmp/euclidean-test.pdf", width=12, height=6)
 par(mfrow=c(1,2))
-plot_samples(model1, nsamp=1000, transformed=TRUE, cex=0.2, main="d")
-plot_samples(model2, nsamp=1000, transformed=TRUE, cex=0.2, main="d2")
+plot_samples(model1, nsamp=1000, transformed=TRUE, cex=0.3, main="d")
+plot_samples(model2, nsamp=1000, transformed=TRUE, cex=0.3, main="d2")
 dev.off()
 
+
+summary(model1)
+summary(model2)
 
 ## -----------------------------------------------------------------------------
 ## Florentine With reference units
@@ -50,6 +54,11 @@ ref <- list(pos=matrix(c(-0.20, -0.20,
             idx=c(7, 9, 14))
 
 model2 <- lsm(Flo ~ 1, ref=ref, d=2, seed=1234)
+
+ctl2 <- control.lsm(MCMC.burnin=2^18, MCMC.interval=100, dist_metric="euclidean2")
+model2 <- lsm(Flo ~ 1, ref=ref, d=2, seed=1234, method="MH", control=ctl2)
+plot_samples(model2, nsamp=1000, transformed=FALSE, cex=0.3, main="d2")
+
 
 
 document("~/lib/R/dynnet")
