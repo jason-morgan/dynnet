@@ -21,4 +21,3 @@ Calculates the number of unique dyads in a network.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

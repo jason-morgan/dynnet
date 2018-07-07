@@ -2,8 +2,8 @@
 % Please edit documentation in R/igraph-utils.R
 \name{vcount}
 \alias{vcount}
-\alias{vcount.dynnet}
 \alias{vcount.igraph}
+\alias{vcount.dynnet}
 \alias{vcount.lsmfit}
 \title{Number of Vertices in a Graph}
 \usage{
@@ -30,4 +30,3 @@ The number of verices in a graph.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

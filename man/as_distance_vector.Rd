@@ -25,4 +25,3 @@ column vector of pairwise distances.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

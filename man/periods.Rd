@@ -24,4 +24,3 @@ The number of periods in the dynamic network.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

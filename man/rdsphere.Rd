@@ -21,4 +21,3 @@ Select a random point from a d-dimensional unit hypersphere.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

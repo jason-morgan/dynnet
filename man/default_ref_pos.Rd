@@ -30,4 +30,3 @@ sets of reference positions were being rejected).
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

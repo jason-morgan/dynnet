@@ -32,4 +32,3 @@ latent space. Use the posterior samples instead.
 \author{
 Jason Morgan
 }
-

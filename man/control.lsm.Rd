@@ -32,4 +32,3 @@ Control parameters for latent space models.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

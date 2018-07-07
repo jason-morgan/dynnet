@@ -39,4 +39,3 @@ Simulate dynammic and static networks.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

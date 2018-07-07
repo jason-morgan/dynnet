@@ -2,8 +2,8 @@
 % Please edit documentation in R/dynnet-package.R
 \docType{package}
 \name{dynnet-package}
-\alias{dynnet}
 \alias{dynnet-package}
+\alias{dynnet}
 \title{Latent Space Models for Static and Dynamic Networks}
 \description{
 \pkg{dynnet} will provide a set of latent space models for static and
@@ -26,13 +26,12 @@ LazyLoad: \tab yes\cr
 \note{
 \pkg{dynnet} is developed by Jason W. Morgan.
 }
-\author{
-Jason W. Morgan (\email{jason.w.morgan@gmail.com})
-}
 \references{
 Hoff, Peter D., Adrian E. Raftery, & Mark S. Handcock (2002)
 ``Latent Space Approaches to Social Network Analysis'', \emph{Journal of the
 American Statistical Association}, 97(460), 1090-1098.
 }
+\author{
+Jason W. Morgan (\email{jason.w.morgan@gmail.com})
+}
 \keyword{package}
-

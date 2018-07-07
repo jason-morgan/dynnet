@@ -27,4 +27,3 @@ critical to the speed of the MLE implementation.
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
 \keyword{internal}
-

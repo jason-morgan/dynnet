@@ -29,4 +29,3 @@ covariates and a positions matrix, Z.
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
 \keyword{internal}
-

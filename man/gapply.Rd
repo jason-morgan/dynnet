@@ -26,4 +26,3 @@ Apply function to each network realization.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

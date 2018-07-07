@@ -36,4 +36,3 @@ Generate a dynamic network object from a list of adjacency matrices.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

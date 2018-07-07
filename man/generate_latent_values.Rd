@@ -29,4 +29,3 @@ Generate latent positions or trajectories for nodes in the network.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

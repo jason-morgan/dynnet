@@ -48,4 +48,3 @@ Estimate a latent space model for static networks as introduced by HRH
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

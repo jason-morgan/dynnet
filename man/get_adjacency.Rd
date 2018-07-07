@@ -24,4 +24,3 @@ Extract adjacency matrices from dynnet object.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

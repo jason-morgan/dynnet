@@ -27,4 +27,3 @@ etc. User beware.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-

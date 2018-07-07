@@ -31,4 +31,3 @@ covariates, and a vector of coefficients on those covariates.
 \author{
 Jason W. Morgan \email{jason.w.morgan@gmail.com}
 }
-
